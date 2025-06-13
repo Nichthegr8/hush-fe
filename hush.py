@@ -11,12 +11,12 @@ from PyQt5.QtCore import Qt, QSize
 
 # --- Constants ---
 USER_PROFILES_DIR = "user_profiles"
-PRIMARY_COLOR = "#FFA726"  # A calm, friendly orange
-ACCENT_COLOR = "#FB8C00"
-TEXT_COLOR = "#424242"
-EMERGENCY_COLOR = "#D32F2F" # A strong but not overly aggressive red
-BACKGROUND_COLOR = "#FFF3E0"
-ERROR_COLOR = "#D32F2F"
+PRIMARY_COLOR = "#42A5F5"     # A calm, friendly blue
+ACCENT_COLOR = "#1E88E5"      # Slightly deeper accent blue
+TEXT_COLOR = "#424242"        # Keeps the same neutral dark gray for text
+EMERGENCY_COLOR = "#D32F2F"   # Retained strong red for emergencies
+BACKGROUND_COLOR = "#E3F2FD"  # Soft blue-tinted background
+ERROR_COLOR = "#D32F2F"       # Same red for errors
 
 class HushApp(QMainWindow):
     """
