@@ -1,0 +1,16 @@
+{
+    "feeling": "",
+    "what_is_wrong_text": "",
+    "hurt_head": false,
+    "hurt_tummy": false,
+    "hurt_ears": false,
+    "is_loud": false,
+    "is_bright": false,
+    "upset_reason": "",
+    "wants_break": false,
+    "wants_hug": false,
+    "wants_water": false,
+    "wants_sit": false,
+    "wants_call_parents": false,
+    "wants_close_app": false
+}
