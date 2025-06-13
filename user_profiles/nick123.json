@@ -1,0 +1,39 @@
+{
+    "credentials": {
+        "username": "nick123",
+        "password": "123"
+    },
+    "general": {
+        "first_name": "AS",
+        "last_name": "qw",
+        "gender": "Female",
+        "dob": "2000-01-14"
+    },
+    "diagnosis": {
+        "autism_type": "\tQW",
+        "communication_styles": [
+            "Verbal"
+        ]
+    },
+    "calming": {
+        "image_themes": [
+            "Nature (forests, oceans)"
+        ],
+        "sound_themes": [
+            "Soft Music"
+        ],
+        "techniques": "\tQW"
+    },
+    "triggers": {
+        "anxieties": [
+            "Unexpected changes in routine"
+        ],
+        "sensitivities": "JI"
+    },
+    "emergency": {
+        "primary_contact_name": "M",
+        "relationship": "M",
+        "phone": "N ",
+        "gps": "No"
+    }
+}
