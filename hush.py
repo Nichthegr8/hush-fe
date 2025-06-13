@@ -11,12 +11,12 @@ from PyQt5.QtCore import Qt, QSize
 
 # --- Constants ---
 USER_PROFILES_DIR = "user_profiles"
-PRIMARY_COLOR = "#42A5F5"     # A calm, friendly blue
-ACCENT_COLOR = "#1E88E5"      # Slightly deeper accent blue
-TEXT_COLOR = "#424242"        # Keeps the same neutral dark gray for text
-EMERGENCY_COLOR = "#D32F2F"   # Retained strong red for emergencies
-BACKGROUND_COLOR = "#E3F2FD"  # Soft blue-tinted background
-ERROR_COLOR = "#D32F2F"       # Same red for errors
+PRIMARY_COLOR = "#0D3B66"    # Deep, confident navy blue
+ACCENT_COLOR = "#4D6A92"     # Softer steel‑blue for highlights
+TEXT_COLOR = "#424242"       # Neutral dark gray—unchanged
+EMERGENCY_COLOR = "#D32F2F"  # Strong red—unchanged
+BACKGROUND_COLOR = "#B4D6E3" # Light, airy blue background
+ERROR_COLOR = "#D32F2F"      # Same red for errors
 
 class HushApp(QMainWindow):
     """
@@ -42,12 +42,10 @@ class HushApp(QMainWindow):
         self.stacked_widget = QStackedWidget()
 
         # Create the screens
-        self.login_screen = LoginScreen(self)
         self.home_screen = HomeScreen(self)
         self.check_in_screen = CheckInScreen(self)
 
         # Add screens to the stack
-        self.stacked_widget.addWidget(self.login_screen)
         self.stacked_widget.addWidget(self.home_screen)
         self.stacked_widget.addWidget(self.check_in_screen)
 
@@ -58,8 +56,8 @@ class HushApp(QMainWindow):
         # Apply the application-wide styles
         self.apply_stylesheet()
         
-        # Start on the login screen
-        self.stacked_widget.setCurrentWidget(self.login_screen)
+        # Start on the home screen
+        self.stacked_widget.setCurrentWidget(self.home_screen)
 
     def apply_stylesheet(self):
         """Applies a CSS stylesheet to the entire application for a consistent look."""
@@ -86,7 +84,6 @@ class HushApp(QMainWindow):
             QLabel#InfoText {{
                 font-size: 14px;
                 line-height: 1.5;
-                word-wrap: break-word;
             }}
             QLabel#ErrorLabel {{
                 color: {ERROR_COLOR};
@@ -155,13 +152,6 @@ class HushApp(QMainWindow):
         """
         self.setStyleSheet(style)
 
-    def login_successful(self, username):
-        """Handles successful login by switching screens and loading data."""
-        self.current_user = username
-        self.home_screen.welcome_user(username)
-        self.check_in_screen.load_data()
-        self.stacked_widget.setCurrentWidget(self.home_screen)
-
     def switch_to_checkin(self):
         """Switches the view to the Check-In Screen."""
         self.stacked_widget.setCurrentWidget(self.check_in_screen)
@@ -169,169 +159,7 @@ class HushApp(QMainWindow):
     def switch_to_home(self):
         """Switches the view to the Home Screen."""
         self.stacked_widget.setCurrentWidget(self.home_screen)
-    
-    def logout(self):
-        """Logs out the current user and returns to the login screen."""
-        self.current_user = None
-        self.login_screen.clear_fields()
-        self.stacked_widget.setCurrentWidget(self.login_screen)
-
-
-class LoginScreen(QWidget):
-    """A screen for user authentication (login or sign-up)."""
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent_window = parent
-        self.init_ui()
-
-    def init_ui(self):
-        # --- Main Layout ---
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(150, 50, 150, 50)
-        main_layout.setSpacing(15)
-        main_layout.setAlignment(Qt.AlignCenter)
-
-        # --- Title ---
-        title = QLabel("HUSH")
-        title.setObjectName("Title")
-        title.setAlignment(Qt.AlignCenter)
-
-        # --- Input Fields ---
-        self.username_input = QLineEdit()
-        self.username_input.setPlaceholderText("Username")
         
-        self.password_input = QLineEdit()
-        self.password_input.setPlaceholderText("Password")
-        self.password_input.setEchoMode(QLineEdit.Password)
-        
-        # --- Sign Up Fields (Initially Hidden) ---
-        self.confirm_password_input = QLineEdit()
-        self.confirm_password_input.setPlaceholderText("Confirm Password")
-        self.confirm_password_input.setEchoMode(QLineEdit.Password)
-        
-        self.autism_type_combo = QComboBox()
-        self.autism_type_combo.addItem("Select Support Needs / Type...")
-        self.autism_type_combo.addItems([
-            "Level 1: Requiring Support",
-            "Level 2: Requiring Substantial Support",
-            "Level 3: Requiring Very Substantial Support",
-            "Asperger's Syndrome",
-            "Pervasive Developmental Disorder (PDD-NOS)",
-            "I prefer not to say",
-            "Other"
-        ])
-
-        # --- Buttons ---
-        self.action_button = QPushButton("Login")
-        self.action_button.clicked.connect(self.handle_login)
-        
-        self.switch_button = QPushButton("Don't have an account? Sign Up")
-        self.switch_button.setObjectName("LinkButton")
-        self.switch_button.clicked.connect(self.switch_to_signup_mode)
-
-        # --- Error Label ---
-        self.error_label = QLabel("")
-        self.error_label.setObjectName("ErrorLabel")
-        self.error_label.setAlignment(Qt.AlignCenter)
-        
-        # --- Add Widgets to Layout ---
-        main_layout.addWidget(title)
-        main_layout.addWidget(self.username_input)
-        main_layout.addWidget(self.password_input)
-        main_layout.addWidget(self.confirm_password_input)
-        main_layout.addWidget(self.autism_type_combo)
-        main_layout.addWidget(self.action_button)
-        main_layout.addWidget(self.switch_button)
-        main_layout.addWidget(self.error_label)
-        main_layout.addStretch(1)
-
-        # Start in login mode
-        self.switch_to_login_mode()
-
-    def switch_to_signup_mode(self):
-        self.confirm_password_input.show()
-        self.autism_type_combo.show()
-        self.action_button.setText("Sign Up")
-        self.action_button.clicked.disconnect()
-        self.action_button.clicked.connect(self.handle_signup)
-        self.switch_button.setText("Already have an account? Login")
-        self.switch_button.clicked.disconnect()
-        self.switch_button.clicked.connect(self.switch_to_login_mode)
-        self.error_label.setText("")
-
-    def switch_to_login_mode(self):
-        self.confirm_password_input.hide()
-        self.autism_type_combo.hide()
-        self.action_button.setText("Login")
-        self.action_button.clicked.disconnect()
-        self.action_button.clicked.connect(self.handle_login)
-        self.switch_button.setText("Don't have an account? Sign Up")
-        self.switch_button.clicked.disconnect()
-        self.switch_button.clicked.connect(self.switch_to_signup_mode)
-        self.error_label.setText("")
-
-    def handle_login(self):
-        username = self.username_input.text()
-        password = self.password_input.text()
-        if not username or not password:
-            self.error_label.setText("Username and password are required.")
-            return
-
-        profile_path = os.path.join(USER_PROFILES_DIR, f"{username}.json")
-        if os.path.exists(profile_path):
-            try:
-                with open(profile_path, "r") as f:
-                    data = json.load(f)
-                if data.get("password") == password:
-                    self.parent_window.login_successful(username)
-                else:
-                    self.error_label.setText("Incorrect password.")
-            except (json.JSONDecodeError, IOError):
-                self.error_label.setText("Error reading user profile.")
-        else:
-            self.error_label.setText("User not found.")
-
-    def handle_signup(self):
-        username = self.username_input.text()
-        password = self.password_input.text()
-        confirm_password = self.confirm_password_input.text()
-        autism_type = self.autism_type_combo.currentText()
-        
-        if not username or not password:
-            self.error_label.setText("Username and password are required.")
-            return
-        if password != confirm_password:
-            self.error_label.setText("Passwords do not match.")
-            return
-        if self.autism_type_combo.currentIndex() == 0:
-            self.error_label.setText("Please select an option.")
-            return
-
-        profile_path = os.path.join(USER_PROFILES_DIR, f"{username}.json")
-        if os.path.exists(profile_path):
-            self.error_label.setText("Username already exists.")
-            return
-        
-        profile_data = {
-            "username": username,
-            "password": password,
-            "autism_type": autism_type
-        }
-
-        try:
-            with open(profile_path, "w") as f:
-                json.dump(profile_data, f, indent=4)
-            # Automatically log in after successful sign up
-            self.parent_window.login_successful(username)
-        except IOError:
-            self.error_label.setText("Could not create user profile.")
-
-    def clear_fields(self):
-        self.username_input.clear()
-        self.password_input.clear()
-        self.confirm_password_input.clear()
-        self.error_label.setText("")
-
 class CheckInScreen(QWidget):
     """
     A screen for users to input information about how they are feeling.
@@ -371,175 +199,39 @@ class CheckInScreen(QWidget):
         self.what_is_wrong_text.setFixedHeight(60)
         layout.addWidget(self.what_is_wrong_text)
 
-
-        # --- Other Questions ---
-        q2_label = QLabel("<b>2. Where does it hurt or bother you?</b>")
+        q2_label = QLabel("<b>2. How can I help?</b>")
         layout.addWidget(q2_label)
-        self.body_parts_group = QHBoxLayout()
-        self.head_check = QCheckBox("Head")
-        self.tummy_check = QCheckBox("Tummy")
-        self.ears_check = QCheckBox("Ears")
-        self.body_parts_group.addWidget(self.head_check)
-        self.body_parts_group.addWidget(self.tummy_check)
-        self.body_parts_group.addWidget(self.ears_check)
-        layout.addLayout(self.body_parts_group)
-
-        q3_label = QLabel("<b>3. Is something too loud, bright, or noisy?</b>")
-        layout.addWidget(q3_label)
-        self.stimuli_group = QHBoxLayout()
-        self.loud_check = QCheckBox("Too Loud")
-        self.bright_check = QCheckBox("Too Bright")
-        self.stimuli_group.addWidget(self.loud_check)
-        self.stimuli_group.addWidget(self.bright_check)
-        layout.addLayout(self.stimuli_group)
-
-        q4_label = QLabel("<b>4. Did something happen that made you upset?</b>")
-        layout.addWidget(q4_label)
-        self.upset_reason_text = QTextEdit()
-        self.upset_reason_text.setFixedHeight(60)
-        layout.addWidget(self.upset_reason_text)
         
-        # --- Guiding Questions ---
-        q6_label = QLabel("<b>5. Do you want to take a break or go to a quiet place?</b>")
-        layout.addWidget(q6_label)
-        self.break_group = QHBoxLayout()
-        self.break_yes = QCheckBox("Yes, please")
-        self.break_no = QCheckBox("No, thank you")
-        self.break_group.addWidget(self.break_yes)
-        self.break_group.addWidget(self.break_no)
-        layout.addLayout(self.break_group)
-
-        q7_label = QLabel("<b>6. How can I help?</b>")
-        layout.addWidget(q7_label)
-        self.help_group = QHBoxLayout()
-        self.hug_check = QCheckBox("A Hug")
-        self.water_check = QCheckBox("Some Water")
-        self.sit_down_check = QCheckBox("To Sit Down")
-        self.call_parents_check = QCheckBox("Call My Parents")
-        self.close_app_check = QCheckBox("Close This")
-        self.help_group.addWidget(self.hug_check)
-        self.help_group.addWidget(self.water_check)
-        self.help_group.addWidget(self.sit_down_check)
-        self.help_group.addWidget(self.call_parents_check)
-        self.help_group.addWidget(self.close_app_check)
-        layout.addLayout(self.help_group)
+        self.how_to_help_text = QTextEdit()
+        self.how_to_help_text.setPlaceholderText("Tell me here...")
+        self.how_to_help_text.setFixedHeight(60)
+        layout.addWidget(self.how_to_help_text)
 
         button_layout = QHBoxLayout()
-        self.save_button = QPushButton("Save & Go to Home")
-        self.save_button.clicked.connect(self.save_and_switch)
-        button_layout.addWidget(self.save_button)
+        self.submit_button = QPushButton("Submit")
+        self.submit_button.clicked.connect(self.submit)
+        button_layout.addWidget(self.submit_button)
         
         layout.addStretch(1)
         layout.addLayout(button_layout)
         self.setLayout(layout)
-        
+
+    def submit(self):
+        pass # Replace with sockcomm to send info
+
     def create_face_button(self, text):
         button = QPushButton(text)
         button.setObjectName("FaceButton")
         button.setCheckable(True)
         button.setFixedSize(QSize(80, 80))
         return button
-
-    def save_and_switch(self):
-        self.save_data()
-        # In a real app, you might want to handle the "Call" or "Close" actions here
-        if self.close_app_check.isChecked():
-            self.parent_window.close()
-        elif self.call_parents_check.isChecked():
-            # This is a placeholder for a real call function
-            QMessageBox.information(self, "Action", "Calling parents... (placeholder)")
-            self.parent_window.switch_to_home()
-        else:
-            self.parent_window.switch_to_home()
-
-
-    def get_checkin_data_path(self):
-        if self.parent_window.current_user:
-            return os.path.join(USER_PROFILES_DIR, f"{self.parent_window.current_user}_checkin.json")
-        return None
-
-    def save_data(self):
-        path = self.get_checkin_data_path()
-        if not path: return
-        
-        selected_feeling = ""
-        if self.happy_face.isChecked(): selected_feeling = "happy"
-        elif self.sad_face.isChecked(): selected_feeling = "sad"
-        elif self.upset_face.isChecked(): selected_feeling = "upset"
-
-        data = {
-            "feeling": selected_feeling,
-            "what_is_wrong_text": self.what_is_wrong_text.toPlainText(),
-            "hurt_head": self.head_check.isChecked(),
-            "hurt_tummy": self.tummy_check.isChecked(),
-            "hurt_ears": self.ears_check.isChecked(),
-            "is_loud": self.loud_check.isChecked(),
-            "is_bright": self.bright_check.isChecked(),
-            "upset_reason": self.upset_reason_text.toPlainText(),
-            "wants_break": self.break_yes.isChecked(),
-            "wants_hug": self.hug_check.isChecked(),
-            "wants_water": self.water_check.isChecked(),
-            "wants_sit": self.sit_down_check.isChecked(),
-            "wants_call_parents": self.call_parents_check.isChecked(),
-            "wants_close_app": self.close_app_check.isChecked()
-        }
-        try:
-            with open(path, "w") as f:
-                json.dump(data, f, indent=4)
-        except IOError as e:
-            print(f"Error saving check-in data: {e}")
-            
-    def load_data(self):
-        path = self.get_checkin_data_path()
-        if not path or not os.path.exists(path):
-            self.clear_fields()
-            return
-
-        try:
-            with open(path, "r") as f:
-                data = json.load(f)
-                
-            if data.get("feeling") == "happy": self.happy_face.setChecked(True)
-            elif data.get("feeling") == "sad": self.sad_face.setChecked(True)
-            elif data.get("feeling") == "upset": self.upset_face.setChecked(True)
-            
-            self.what_is_wrong_text.setPlainText(data.get("what_is_wrong_text", ""))
-            self.head_check.setChecked(data.get("hurt_head", False))
-            self.tummy_check.setChecked(data.get("hurt_tummy", False))
-            self.ears_check.setChecked(data.get("hurt_ears", False))
-            self.loud_check.setChecked(data.get("is_loud", False))
-            self.bright_check.setChecked(data.get("is_bright", False))
-            self.break_yes.setChecked(data.get("wants_break", False))
-            self.hug_check.setChecked(data.get("wants_hug", False))
-            self.water_check.setChecked(data.get("wants_water", False))
-            self.sit_down_check.setChecked(data.get("wants_sit", False))
-            self.call_parents_check.setChecked(data.get("wants_call_parents", False))
-            self.close_app_check.setChecked(data.get("wants_close_app", False))
-            
-            self.upset_reason_text.setPlainText(data.get("upset_reason", ""))
-        except (IOError, json.JSONDecodeError):
-            self.clear_fields()
     
     def clear_fields(self):
         """Resets all fields on the check-in screen to their default state."""
+        self.what_is_wrong_text.clear()
         self.happy_face.setChecked(False)
         self.sad_face.setChecked(False)
         self.upset_face.setChecked(False)
-        self.what_is_wrong_text.clear()
-        self.head_check.setChecked(False)
-        self.tummy_check.setChecked(False)
-        self.ears_check.setChecked(False)
-        self.loud_check.setChecked(False)
-        self.bright_check.setChecked(False)
-        self.break_yes.setChecked(False)
-        self.break_no.setChecked(False)
-        self.hug_check.setChecked(False)
-        self.water_check.setChecked(False)
-        self.sit_down_check.setChecked(False)
-        self.call_parents_check.setChecked(False)
-        self.close_app_check.setChecked(False)
-        self.upset_reason_text.clear()
-
 
 class HomeScreen(QWidget):
     """
@@ -560,14 +252,9 @@ class HomeScreen(QWidget):
         top_bar_layout = QHBoxLayout()
         self.welcome_label = QLabel()
         self.welcome_label.setAlignment(Qt.AlignLeft)
-
-        logout_button = QPushButton("Logout")
-        logout_button.setFixedWidth(120)
-        logout_button.clicked.connect(self.parent_window.logout)
         
         top_bar_layout.addWidget(self.welcome_label)
         top_bar_layout.addStretch(1)
-        top_bar_layout.addWidget(logout_button)
         layout.addLayout(top_bar_layout)
 
         emergency_button = QPushButton("I NEED HELP")
@@ -608,9 +295,6 @@ class HomeScreen(QWidget):
 
         layout.addStretch(1)
 
-        update_info_button = QPushButton("Update Check-In Answers")
-        update_info_button.clicked.connect(self.parent_window.switch_to_checkin)
-        layout.addWidget(update_info_button)
         self.setLayout(layout)
 
     def welcome_user(self, username):
