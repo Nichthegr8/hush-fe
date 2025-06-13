@@ -616,9 +616,9 @@ class HomeScreen(QWidget):
     def welcome_user(self, username):
         self.welcome_label.setText(f"<b>Welcome, {username}!</b>")
 
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = HushApp()
-    window.show()
-    sys.exit(app.exec_())    
+    if __name__ == "__main__":
+        app = QApplication(sys.argv)
+        window = HushApp()
+        window.show()
+        sys.exit(app.exec_())    
+#this is a comment
