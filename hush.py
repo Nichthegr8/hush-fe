@@ -417,15 +417,6 @@ class SignUpScreen(QWidget):
         username = self.username_input.text().strip()
         password = self.password_input.text()
 
-        if not username or not password:
-            self.error_label.setText("Username and Password cannot be empty.")
-            return
-        
-        profile_path = os.path.join(USER_PROFILES_DIR, f"{username}.json")
-        if os.path.exists(profile_path):
-            self.error_label.setText("This username is already taken.")
-            return
-
         # --- Gather all data into a dictionary ---
         profile_data = {
             "credentials": {
@@ -463,10 +454,10 @@ class SignUpScreen(QWidget):
 
         # --- Save data to file and log in ---
         try:
-            with open(profile_path, 'w') as f:
-                json.dump(profile_data, f, indent=4)
-            # Automatically log in the user after successful creation
-            self.parent_window.login_successful(profile_data)
+            profl_cs = connectors.profilesClientSide(config.PROFL_SERVICE_HOST)
+            profl_cs.sign_up(profile_data)
+            profl_cs.onClientError = lambda error: self.error_label.setText(error)
+            profl_cs.onSignupSuccess = lambda: self.parent_window.switch_to_login()
         except IOError as e:
             self.error_label.setText(f"Error saving profile: {e}")
 
@@ -476,23 +467,37 @@ class AIPage(QWidget):
         self.parent_window = parent
         self.init_ui()
 
-    
-    
+    def emoji_to_qicon(self, emoji: str, size: int = 64) -> QIcon:
+        # Create a QPixmap to draw the emoji
+        pixmap = QPixmap(size, size)
+        pixmap.fill(Qt.transparent)
+
+        # Use QPainter to draw the emoji text
+        painter = QPainter(pixmap)
+        font = QFont("Segoe UI Emoji", int(size * 0.8))  # Use emoji-compatible font
+        painter.setFont(font)
+        painter.drawText(pixmap.rect(), Qt.AlignCenter, emoji)
+        painter.end()
+
+        return QIcon(pixmap)
+
     def create_emoji_button(self, emoji, label_text):
-        button = QPushButton(emoji)
-        button.setFont(QFont("Arial", 70))  # Made emojis significantly bigger
-        button.setFixedSize(QSize(120, 120)) # Increased button size to accommodate larger emoji
-        # button.setFont(QFont("Arial", 70))  # Big emoji
-        # button.setFixedSize(QSize(80, 80))
-        button.setStyleSheet("""
-            QPushButton {
+        button = QPushButton()
+        icon_size = 64  # or however big you want the icon
+
+        button.setIcon(self.emoji_to_qicon(emoji, size=icon_size))
+        button.setIconSize(QSize(icon_size, icon_size))
+        button.setFixedSize(QSize(icon_size + 16, icon_size + 16))  # allow some padding
+
+        button.setStyleSheet(f"""
+            QPushButton {{
                 background-color: transparent;
                 border: none;
-            }
-            QPushButton:pressed {
+            }}
+            QPushButton:pressed {{
                 background-color: #DDEEFF;
-                border-radius: 40px;
-            }
+                border-radius: {icon_size // 2}px;
+            }}
         """)
         button.setToolTip(label_text)
         button.clicked.connect(lambda _, e=emoji: self.emoji_clicked(e))
@@ -517,9 +522,6 @@ class AIPage(QWidget):
             ("😨", "Scared"),
             ("😣", "Hurt"),
         ]
-
-        
-
 
         for emoji, text in feelings:
             vbox = QVBoxLayout()
