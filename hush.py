@@ -481,7 +481,6 @@ class AIPage(QWidget):
         layout = QVBoxLayout()
         
         q1_label = QLabel("<b>1. How are you feeling right now?</b>")
-        layout.addWidget(q1_label)
         
         self.feelings_group = QHBoxLayout()
 
@@ -563,6 +562,7 @@ class AIPage(QWidget):
         self.btnwrapper.setLayout(button_layout)
         
         layout.addWidget(emergency_button, 1)
+        layout.addWidget(q1_label)
         layout.addLayout(self.feelings_group)
         layout.addLayout(self.chat_display)
         layout.addWidget(self.btnwrapper)
