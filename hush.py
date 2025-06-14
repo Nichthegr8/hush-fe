@@ -507,8 +507,6 @@ class AIPage(QWidget):
             vbox.addWidget(checkbox, alignment=Qt.AlignHCenter)
             self.feelings_group.addLayout(vbox)
 
-        layout.addLayout(self.feelings_group)
-
         # Add red Emergency button under the feelings group
         emergency_button = QPushButton("I need help")
         emergency_button.setStyleSheet("QPushButton { background-color: red; color: white; font-weight: bold; font-size: 18px; }")
@@ -565,6 +563,7 @@ class AIPage(QWidget):
         self.btnwrapper.setLayout(button_layout)
         
         layout.addWidget(emergency_button, 1)
+        layout.addLayout(self.feelings_group)
         layout.addLayout(self.chat_display)
         layout.addWidget(self.btnwrapper)
         self.setLayout(layout)
