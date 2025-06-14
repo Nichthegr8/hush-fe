@@ -599,13 +599,10 @@ class AIPage(QWidget):
 
         self.send = QPushButton(QIcon("up_arrow.png"), "", None)
         self.send.clicked.connect(self.send_message)
-        self.send.setObjectName("SendButton")
 
         self.camera = QPushButton(QIcon("camera.png"), "", None)
-        self.camera.setObjectName("SendButton")
 
         self.mic = QPushButton(QIcon("microphone.png"), "", None)
-        self.mic.setObjectName("SendButton")
 
         self.user_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.send.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -614,6 +611,10 @@ class AIPage(QWidget):
         self.user_input.setFixedHeight(fixed_height+10)
         self.send.setFixedHeight(fixed_height)
         self.send.setFixedWidth(fixed_height)
+        self.camera.setFixedHeight(fixed_height)
+        self.camera.setFixedWidth(fixed_height)
+        self.mic.setFixedHeight(fixed_height)
+        self.mic.setFixedWidth(fixed_height)
         
         button_layout.addWidget(self.mic)
         button_layout.addWidget(self.camera)     
@@ -628,19 +629,14 @@ class AIPage(QWidget):
                 font-size: {FONT_SIZE};
                 color: {TEXT_COLOR};
             }}
-            QPushButton#SendButton {{
+            QPushButton {{
                 border-radius: 25px;
             }}""")
-        #line = QFrame()
-        #line.setFrameShape(QFrame.HLine)
-        #line.setFrameShadow(QFrame.Sunken)
-        #line.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         
         self.btnwrapper.setLayout(button_layout)
         
         layout.addLayout(button_layout)
         layout.addLayout(self.chat_display)
-        #layout.addWidget(line)
         layout.addWidget(self.btnwrapper)
         self.setLayout(layout)
 
@@ -673,13 +669,12 @@ class AIPage(QWidget):
         usermessagewidget = QWidget()
         layout = QHBoxLayout(usermessagewidget)
         layout.addStretch(1)
-        usermessagewidget.setStyleSheet("""background-color: #d2f0ff;
+        usermessagewidget.setStyleSheet(f"""background-color: #d2f0ff;
                             color: #000;
                             padding: 10px;
                             border-radius: 12px;
-                            font-size: 15px;
-                            margin: 6px 0;
-                            max-width: 75%;""")
+                            font-size: {FONT_SIZE};
+                            margin: 6px 0;""")
         layout.addWidget(QLabel(user_text))
         usermessagewidget.setLayout(layout)
 
@@ -697,8 +692,6 @@ class AIPage(QWidget):
         self.llm_cs.generate_response(user_text)
         self.addwidgettostretchlay(ai_response, self.chat_display)
         
-        #self.chat_display.verticalScrollBar().setValue(self.chat_display.verticalScrollBar().maximum())
-
     def onStreamPartRecieved(self, text: str, qlabel: QLabel):
         qlabel.setText(qlabel.text()+text)
 
