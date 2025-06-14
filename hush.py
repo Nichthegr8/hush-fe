@@ -621,7 +621,6 @@ class AIPage(QWidget):
         button_layout.addWidget(self.user_input)
         button_layout.addWidget(self.send)
 
-
         self.btnwrapper.setStyleSheet(f"""
             QLineEdit {{
                 background-color: {ROUNDEDWIDGET_COLOR};
