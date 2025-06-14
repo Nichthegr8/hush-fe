@@ -120,6 +120,7 @@ class profilesServerSide:
         self.logInPcktType = 2
         self.logInAcceptPckt = 5
         self.errorPcktType = 4
+        self.signupFinishedPcktType = 6
 
         self.sserver.onopen = self.onopen
         self.sserver.onmessage = self.onmessage
@@ -152,10 +153,12 @@ class profilesServerSide:
             with open(profile_path, "w+")as f:
                 profile2 = copy.copy(profile)
                 profile2["credentials"] = {
-                    "username" : profile2["username"],
-                    "password" : profile2["passwordhash"]
+                    "username" : profile2["credentials"]["username"],
+                    "password" : profile2["credentials"]["passwordhash"]
                 }
                 f.write(json.dumps(profile))
+                conn.send(bytearray([self.signupFinishedPcktType]))
+                
 
     def onopen(self, conn: socket.socket):
         self.log(f"Connection from {conn.getpeername()}")
@@ -194,7 +197,7 @@ class profilesServerSide:
                 if not isinstance(data['triggers']['anxieties'], list):
                     conn.send(bytearray([self.errorPcktType])+b"Invalid profile")
                 data['credentials']['passwordhash'] = hashlib.sha256(data['credentials']['password'].encode()).hexdigest()
-                self.onSignUp(data)
+                self.onSignUp(conn, data)
             else:
                 if (not "username" in data) or (not "password" in data):
                     self.log(f"{conn.getpeername()}: Login attempt: did not provide credentials")
@@ -207,7 +210,8 @@ class profilesServerSide:
         self.log(f"{addr}: Connection closed")
 
     def onerror(self, conn: socket.socket, e: Exception):
-        self.log(f"{conn.getpeername()}: Exception in connection: {e}")
+        #self.log(f"{conn.getpeername()}: Exception in connection: {e}")
+        raise
 
 class profilesClientSide:
     def __init__(self, host):
@@ -217,10 +221,12 @@ class profilesClientSide:
         self.signUpPcktType = 3
         self.errorPcktType = 4
         self.logInAcceptPcktType = 5
+        self.signupFinishedPcktType = 6
 
         self.sclient.onmessage = self.onmessage
 
-        self.onGotProfile = lambda profile:print("Called ongotprofile")
+        self.onGotProfile = lambda profile:None
+        self.onSignupSuccess = lambda:None
         self.onClientError = lambda error:None
 
         if not self.sclient.running:
@@ -231,6 +237,8 @@ class profilesClientSide:
             self.onClientError(data[1:].decode())
         elif data[0] == self.logInAcceptPcktType:
             self.onGotProfile(json.loads(data[1:]))
+        elif data[0] == self.signupFinishedPcktType:
+            self.onSignupSuccess()
 
     def log_in(self, username, password):
         self.sclient.send(bytearray([self.logInPcktType])+json.dumps({"username":username,"password":password}).encode())

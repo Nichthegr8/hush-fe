@@ -500,6 +500,7 @@ class AIPage(QWidget):
         button.clicked.connect(lambda _, e=emoji: self.emoji_clicked(e))
         return button
 
+
     def emoji_clicked(self, emoji):
         pass
 
