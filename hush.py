@@ -508,23 +508,42 @@ class AIPage(QWidget):
         self.parent_window = parent
         self.init_ui()
 
+    def emoji_to_qicon(self, emoji: str, size: int = 64) -> QIcon:
+        # Create a QPixmap to draw the emoji
+        pixmap = QPixmap(size, size)
+        pixmap.fill(Qt.transparent)
+
+        # Use QPainter to draw the emoji text
+        painter = QPainter(pixmap)
+        font = QFont("Segoe UI Emoji", int(size * 0.8))  # Use emoji-compatible font
+        painter.setFont(font)
+        painter.drawText(pixmap.rect(), Qt.AlignCenter, emoji)
+        painter.end()
+
+        return QIcon(pixmap)
+
     def create_emoji_button(self, emoji, label_text):
-        button = QPushButton(emoji)
-        button.setFont(QFont("Arial", 40))  # Big emoji
-        button.setFixedSize(QSize(80, 80))
-        button.setStyleSheet("""
-            QPushButton {
+        button = QPushButton()
+        icon_size = 64  # or however big you want the icon
+
+        button.setIcon(self.emoji_to_qicon(emoji, size=icon_size))
+        button.setIconSize(QSize(icon_size, icon_size))
+        button.setFixedSize(QSize(icon_size + 16, icon_size + 16))  # allow some padding
+
+        button.setStyleSheet(f"""
+            QPushButton {{
                 background-color: transparent;
                 border: none;
-            }
-            QPushButton:pressed {
+            }}
+            QPushButton:pressed {{
                 background-color: #DDEEFF;
-                border-radius: 40px;
-            }
+                border-radius: {icon_size // 2}px;
+            }}
         """)
         button.setToolTip(label_text)
         button.clicked.connect(lambda _, e=emoji: self.emoji_clicked(e))
         return button
+
 
     def emoji_clicked(self, emoji):
         pass
