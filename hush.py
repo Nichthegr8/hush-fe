@@ -462,19 +462,81 @@ class SignUpScreen(QWidget):
             self.error_label.setText(f"Error saving profile: {e}")
 
 # --- AI PAGE ---
+# class AIPage(QWidget):
+#     def __init__(self, parent):
+#         super().__init__(parent)
+#         self.parent_window = parent
+#         self.init_ui()
+
+#     def create_face_button(self, text):
+#         button = QPushButton(text)
+#         button.setObjectName("FaceButton")
+#         button.setCheckable(True)
+#         button.setFixedSize(QSize(80, 80))
+#         return button
+
+#     def init_ui(self):
+#         layout = QVBoxLayout()
+        
+#         q1_label = QLabel("<b>1. How are you feeling right now?</b>")
+        
+#         self.feelings_group = QHBoxLayout()
+
+#         feelings = [
+#             ("😢", "Sad"),
+#             ("😠", "Anxious"),
+#             ("😡", "Angry"),
+#             ("😨", "Scared"),
+#             ("😣", "Hurt"),
+#         ]
+
+#         for emoji, text in feelings:
+#             vbox = QVBoxLayout()
+#             emoji_label = QLabel(emoji)
+#             emoji_label.setAlignment(Qt.AlignCenter)
+#             font = QFont()
+#             font.setPointSize(32)  # Make emoji larger
+#             emoji_label.setFont(font)
+#             checkbox = QCheckBox(text)
+#             vbox.addWidget(emoji_label)
+#             vbox.addWidget(checkbox, alignment=Qt.AlignHCenter)
+#             self.feelings_group.addLayout(vbox)
+
 class AIPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent_window = parent
         self.init_ui()
 
+    def create_emoji_button(self, emoji, label_text):
+        button = QPushButton(emoji)
+        button.setFont(QFont("Arial", 40))  # Big emoji
+        button.setFixedSize(QSize(80, 80))
+        button.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                border: none;
+            }
+            QPushButton:pressed {
+                background-color: #DDEEFF;
+                border-radius: 40px;
+            }
+        """)
+        button.setToolTip(label_text)
+        button.clicked.connect(lambda _, e=emoji: self.emoji_clicked(e))
+        return button
+
+    def emoji_clicked(self, emoji):
+        pass
+
+
     def init_ui(self):
         layout = QVBoxLayout()
-        
-        q1_label = QLabel("<b>1. How are you feeling right now?</b>")
-        
-        self.feelings_group = QHBoxLayout()
 
+        q1_label = QLabel("<b>1. How are you feeling right now?</b>")
+        layout.addWidget(q1_label)
+
+        self.feelings_group = QHBoxLayout()
         feelings = [
             ("😢", "Sad"),
             ("😠", "Anxious"),
@@ -485,21 +547,48 @@ class AIPage(QWidget):
 
         for emoji, text in feelings:
             vbox = QVBoxLayout()
-            emoji_label = QLabel(emoji)
-            emoji_label.setAlignment(Qt.AlignCenter)
-            font = QFont()
-            font.setPointSize(32)  # Make emoji bigger
-            emoji_label.setFont(font)
-            emoji_label.setStyleSheet(f"""font-size:{FONT_SIZE*3}""")
-            checkbox = QCheckBox(text)
-            checkbox.setStyleSheet("QCheckBox { text-align: center; }")
-            vbox.addWidget(emoji_label)
-            vbox.addWidget(checkbox, alignment=Qt.AlignHCenter)
+            btn = self.create_emoji_button(emoji, text)
+            label = QLabel(text)
+            label.setAlignment(Qt.AlignCenter)
+            vbox.addWidget(btn, alignment=Qt.AlignCenter)
+            vbox.addWidget(label)
             self.feelings_group.addLayout(vbox)
 
+        self.setLayout(layout)
+        
         # Add red Emergency button under the feelings group
-        emergency_button = QPushButton("I need help")
+        
+        
+        emergency_button = QPushButton("I need help") 
         emergency_button.setStyleSheet("QPushButton { background-color: red; color: white; font-weight: bold; font-size: 18px; }")
+        emergency_button.setGeometry(0, 0, 2, 2)
+        
+        menu_button = QPushButton("m")
+        
+        menu_button.setFixedHeight(50)
+        menu_button.setFixedWidth(50)
+
+        menu_button.setStyleSheet(f"""
+            QPushButton {{
+                border-radius: 25px;
+            }}
+        """)
+        
+        calmingcenterbtn = QPushButton("c")
+        
+        calmingcenterbtn.setFixedHeight(50)
+        calmingcenterbtn.setFixedWidth(50)
+
+        calmingcenterbtn.setStyleSheet(f"""
+            QPushButton {{
+                border-radius: 25px;
+            }}
+        """)
+
+        topbarlayout = QHBoxLayout()
+        topbarlayout.addWidget(menu_button)
+        topbarlayout.addWidget(emergency_button)
+        topbarlayout.addWidget(calmingcenterbtn)
 
         self.chat_display = QVBoxLayout()
         self.chat_display.setObjectName("ChatDisplay")
@@ -552,7 +641,7 @@ class AIPage(QWidget):
         
         self.btnwrapper.setLayout(button_layout)
         
-        layout.addWidget(emergency_button, 1)
+        layout.addLayout(topbarlayout)
         layout.addWidget(q1_label)
         layout.addLayout(self.feelings_group)
         layout.addLayout(self.chat_display)
