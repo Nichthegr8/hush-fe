@@ -474,7 +474,7 @@ class AIPage(QWidget):
 
         # Use QPainter to draw the emoji text
         painter = QPainter(pixmap)
-        font = QFont("Segoe UI Emoji", int(size * 0.6))  # Use emoji-compatible font
+        font = QFont("Segoe UI Emoji", int(size * 0.5))  # Use emoji-compatible font
         painter.setFont(font)
         painter.drawText(pixmap.rect(), Qt.AlignCenter, emoji)
         painter.end()
