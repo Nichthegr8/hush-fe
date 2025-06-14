@@ -178,6 +178,10 @@ class HushApp(QMainWindow):
     def switch_to_ai_page(self):
         self.stacked_widget.setCurrentWidget(self.ai_page)
 
+    def closeEvent(self, a0):
+        sys.exit(0)
+        return super().closeEvent(a0)
+
 # --- LOGIN SCREEN ---
 class LoginScreen(QWidget):
     def __init__(self, parent):
@@ -233,10 +237,11 @@ class LoginScreen(QWidget):
 
         prof_cs = connectors.profilesClientSide(config.PROFL_SERVICE_HOST)
         prof_cs.onClientError = lambda error: self.error_label.setText(error)
-        prof_cs.onGotProfile = self.onGotProfile
+        prof_cs.onGotProfile = lambda profile: self.onGotProfile(profile, prof_cs)
         prof_cs.log_in(username, password)
 
-    def onGotProfile(self, profile: dict):
+    def onGotProfile(self, profile: dict, prof_cs: connectors.profilesClientSide):
+        prof_cs.sclient.close()
         username = self.username_input.text().strip()
         password = self.password_input.text()
         self.cache_info(username, password)
@@ -431,7 +436,7 @@ class SignUpScreen(QWidget):
                 "first_name": self.first_name_input.text(),
                 "last_name": self.last_name_input.text(),
                 "gender": self.gender_input.currentText(),
-                "dob": self.dob_input.date().toString("yyyy-MM-dd")
+                "dob": self.dob_input.text()
             },
             "diagnosis": {
                 "autism_type": self.autism_type_input.toPlainText(),
@@ -495,6 +500,7 @@ class AIPage(QWidget):
             font = QFont()
             font.setPointSize(32)  # Make emoji bigger
             emoji_label.setFont(font)
+            emoji_label.setStyleSheet(f"""font-size:{FONT_SIZE*3}""")
             checkbox = QCheckBox(text)
             checkbox.setStyleSheet("QCheckBox { text-align: center; }")
             vbox.addWidget(emoji_label)
