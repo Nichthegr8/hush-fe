@@ -461,47 +461,6 @@ class SignUpScreen(QWidget):
         except IOError as e:
             self.error_label.setText(f"Error saving profile: {e}")
 
-# --- AI PAGE ---
-# class AIPage(QWidget):
-#     def __init__(self, parent):
-#         super().__init__(parent)
-#         self.parent_window = parent
-#         self.init_ui()
-
-#     def create_face_button(self, text):
-#         button = QPushButton(text)
-#         button.setObjectName("FaceButton")
-#         button.setCheckable(True)
-#         button.setFixedSize(QSize(80, 80))
-#         return button
-
-#     def init_ui(self):
-#         layout = QVBoxLayout()
-        
-#         q1_label = QLabel("<b>1. How are you feeling right now?</b>")
-        
-#         self.feelings_group = QHBoxLayout()
-
-#         feelings = [
-#             ("😢", "Sad"),
-#             ("😠", "Anxious"),
-#             ("😡", "Angry"),
-#             ("😨", "Scared"),
-#             ("😣", "Hurt"),
-#         ]
-
-#         for emoji, text in feelings:
-#             vbox = QVBoxLayout()
-#             emoji_label = QLabel(emoji)
-#             emoji_label.setAlignment(Qt.AlignCenter)
-#             font = QFont()
-#             font.setPointSize(32)  # Make emoji larger
-#             emoji_label.setFont(font)
-#             checkbox = QCheckBox(text)
-#             vbox.addWidget(emoji_label)
-#             vbox.addWidget(checkbox, alignment=Qt.AlignHCenter)
-#             self.feelings_group.addLayout(vbox)
-
 class AIPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
