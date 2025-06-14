@@ -465,98 +465,6 @@ class SignUpScreen(QWidget):
         except IOError as e:
             self.error_label.setText(f"Error saving profile: {e}")
 
-# --- HOME SCREEN ---
-class HomeScreen(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent_window = parent
-        self.init_ui()
-
-    def init_ui(self):
-        layout = QVBoxLayout()
-        layout.setContentsMargins(50, 30, 50, 30)
-        layout.setSpacing(20)
-        layout.setAlignment(Qt.AlignTop)
-
-        self.welcome_label = QLabel()
-        self.welcome_label.setAlignment(Qt.AlignLeft)
-        layout.addWidget(self.welcome_label)
-
-        hush_title = QLabel()
-        hush_title.setPixmap(load_image("logo.png"))
-        hush_title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(hush_title)
-
-        # --- MODIFIED: Removed Emergency Button ---
-        checkin_button = QPushButton("Enter My Safe Place")
-        checkin_button.setMinimumHeight(100)
-        checkin_button.clicked.connect(self.parent_window.switch_to_checkin)
-        layout.addWidget(checkin_button)
-        
-        layout.addStretch()
-        self.setLayout(layout)
-
-    def load_profile(self, user_data):
-        first_name = user_data.get("general", {}).get("first_name", "User")
-        self.welcome_label.setText(f"<h2>Welcome, {first_name}!</h2>")
-
-
-
-        # --- MODIFIED: Removed Question 3 ---
-
-        layout = self.layout()
-        
-        q1_label = QLabel("<b>1. How are you feeling right now?</b>")
-        layout.addWidget(q1_label)
-        
-        self.feelings_group = QHBoxLayout()
-        self.sad_face = QCheckBox("😢 Sad")
-        self.anxious_face = QCheckBox("😠 Anxious")
-        self.angry_face = QCheckBox("😡 Angry")
-        self.scared_face = QCheckBox("😨 Scared")
-        self.hurt_face = QCheckBox("😣 Hurt")
-
-        self.feelings_group.addWidget(self.sad_face)
-        self.feelings_group.addWidget(self.anxious_face)
-        self.feelings_group.addWidget(self.angry_face)
-        self.feelings_group.addWidget(self.scared_face)
-        self.feelings_group.addWidget(self.hurt_face)
-
-        layout.addLayout(self.feelings_group)
-
-    
-
-        self.what_is_wrong_text = QTextEdit()
-        self.what_is_wrong_text.setPlaceholderText("You can write more here...")
-        self.what_is_wrong_text.setFixedHeight(80)
-        layout.addWidget(self.what_is_wrong_text)
-
-        layout.addStretch(1)
-
-        button_layout = QHBoxLayout()
-        back_button = QPushButton("Back")
-        back_button.clicked.connect(self.parent_window.switch_to_home)
-        submit_button = QPushButton("Submit to AI")
-        submit_button.clicked.connect(self.submit_to_ai)
-        
-        button_layout.addWidget(back_button)
-        button_layout.addStretch()
-        button_layout.addWidget(submit_button)
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
-    
-    def get_data(self):
-        data = { "feeling": "", "what_is_wrong": self.what_is_wrong_text.toPlainText().strip() }
-        if self.happy_face.isChecked(): data["feeling"] = "Happy 😊"
-        elif self.sad_face.isChecked(): data["feeling"] = "Sad 😢"
-        elif self.upset_face.isChecked(): data["feeling"] = "Upset 😠"
-        elif self.scared_face.isChecked(): data["feeling"] = "Scared 😨"
-        elif self.hurt_face.isChecked(): data["feeling"] = "Hurt 😣"
-        return data
-
-    def submit_to_ai(self):
-        self.parent_window.switch_to_ai_page()
-
 # --- AI PAGE ---
 class AIPage(QWidget):
     def __init__(self, parent):
@@ -596,9 +504,8 @@ class AIPage(QWidget):
         layout.addLayout(self.feelings_group)
 
         # Add red Emergency button under the feelings group
-        emergency_button = QPushButton("Emergency")
+        emergency_button = QPushButton("I need help")
         emergency_button.setStyleSheet("QPushButton { background-color: red; color: white; font-weight: bold; font-size: 18px; }")
-        layout.addWidget(emergency_button, alignment=Qt.AlignHCenter)
 
         self.chat_display = QVBoxLayout()
         self.chat_display.setObjectName("ChatDisplay")
@@ -653,6 +560,7 @@ class AIPage(QWidget):
         
         layout.addLayout(self.chat_display)
         layout.addWidget(self.btnwrapper)
+        layout.addWidget(emergency_button, 1)
         self.setLayout(layout)
 
     def start_conversation(self):
