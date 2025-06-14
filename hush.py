@@ -564,9 +564,9 @@ class AIPage(QWidget):
         
         self.btnwrapper.setLayout(button_layout)
         
+        layout.addWidget(emergency_button, 1)
         layout.addLayout(self.chat_display)
         layout.addWidget(self.btnwrapper)
-        layout.addWidget(emergency_button, 1)
         self.setLayout(layout)
 
     def start_conversation(self):
