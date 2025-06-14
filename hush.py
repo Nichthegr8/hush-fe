@@ -465,7 +465,7 @@ class SignUpScreen(QWidget):
             }
         }
 
-        # --- Send data ---
+        # --- Save data to file and log in ---
         try:
             with open(profile_path, 'w') as f:
                 json.dump(profile_data, f, indent=4)
@@ -519,39 +519,36 @@ class HomeScreen(QWidget):
         layout.addWidget(q1_label)
         
         self.feelings_group = QHBoxLayout()
-        self.sad_face = QCheckBox("😢 Sad")
-        self.anxious_face = QCheckBox("😠 Anxious")
-        self.angry_face = QCheckBox("😡 Angry")
-        self.scared_face = QCheckBox("😨 Scared")
-        self.hurt_face = QCheckBox("😣 Hurt")
 
-        self.feelings_group.addWidget(self.sad_face)
-        self.feelings_group.addWidget(self.anxious_face)
-        self.feelings_group.addWidget(self.angry_face)
-        self.feelings_group.addWidget(self.scared_face)
-        self.feelings_group.addWidget(self.hurt_face)
+        feelings = [
+            ("😢", "Sad"),
+            ("😠", "Anxious"),
+            ("😡", "Angry"),
+            ("😨", "Scared"),
+            ("😣", "Hurt"),
+        ]
+
+        for emoji, text in feelings:
+            vbox = QVBoxLayout()
+            emoji_label = QLabel(emoji)
+            emoji_label.setAlignment(Qt.AlignCenter)
+            font = QFont()
+            font.setPointSize(32)  # Make emoji bigger
+            emoji_label.setFont(font)
+            checkbox = QCheckBox(text)
+            checkbox.setStyleSheet("QCheckBox { text-align: center; }")  # Center the text
+            vbox.addWidget(emoji_label)
+            vbox.addWidget(checkbox, alignment=Qt.AlignHCenter)
+            self.feelings_group.addLayout(vbox)
 
         layout.addLayout(self.feelings_group)
 
-    
+        # Add red Emergency button under the feelings group
+        emergency_button = QPushButton("Emergency")
+        emergency_button.setStyleSheet("QPushButton { background-color: red; color: white; font-weight: bold; font-size: 18px; }")
+        layout.addWidget(emergency_button, alignment=Qt.AlignHCenter)
 
-        self.what_is_wrong_text = QTextEdit()
-        self.what_is_wrong_text.setPlaceholderText("You can write more here...")
-        self.what_is_wrong_text.setFixedHeight(80)
-        layout.addWidget(self.what_is_wrong_text)
-
-        layout.addStretch(1)
-
-        button_layout = QHBoxLayout()
-        back_button = QPushButton("Back")
-        back_button.clicked.connect(self.parent_window.switch_to_home)
-        submit_button = QPushButton("Submit to AI")
-        submit_button.clicked.connect(self.submit_to_ai)
-        
-        button_layout.addWidget(back_button)
-        button_layout.addStretch()
-        button_layout.addWidget(submit_button)
-        layout.addLayout(button_layout)
+        # If this is in a QWidget subclass, set the layout:
         self.setLayout(layout)
     
     def get_data(self):
@@ -580,19 +577,34 @@ class AIPage(QWidget):
         layout.addWidget(q1_label)
         
         self.feelings_group = QHBoxLayout()
-        self.sad_face = QCheckBox("😢 Sad")
-        self.anxious_face = QCheckBox("😠 Anxious")
-        self.angry_face = QCheckBox("😡 Angry")
-        self.scared_face = QCheckBox("😨 Scared")
-        self.hurt_face = QCheckBox("😣 Hurt")
 
-        self.feelings_group.addWidget(self.sad_face)
-        self.feelings_group.addWidget(self.anxious_face)
-        self.feelings_group.addWidget(self.angry_face)
-        self.feelings_group.addWidget(self.scared_face)
-        self.feelings_group.addWidget(self.hurt_face)
+        feelings = [
+            ("😢", "Sad"),
+            ("😠", "Anxious"),
+            ("😡", "Angry"),
+            ("😨", "Scared"),
+            ("😣", "Hurt"),
+        ]
+
+        for emoji, text in feelings:
+            vbox = QVBoxLayout()
+            emoji_label = QLabel(emoji)
+            emoji_label.setAlignment(Qt.AlignCenter)
+            font = QFont()
+            font.setPointSize(32)  # Make emoji bigger
+            emoji_label.setFont(font)
+            checkbox = QCheckBox(text)
+            checkbox.setStyleSheet("QCheckBox { text-align: center; }")
+            vbox.addWidget(emoji_label)
+            vbox.addWidget(checkbox, alignment=Qt.AlignHCenter)
+            self.feelings_group.addLayout(vbox)
 
         layout.addLayout(self.feelings_group)
+
+        # Add red Emergency button under the feelings group
+        emergency_button = QPushButton("Emergency")
+        emergency_button.setStyleSheet("QPushButton { background-color: red; color: white; font-weight: bold; font-size: 18px; }")
+        layout.addWidget(emergency_button, alignment=Qt.AlignHCenter)
 
         self.chat_display = QVBoxLayout()
         self.chat_display.setObjectName("ChatDisplay")
@@ -645,7 +657,6 @@ class AIPage(QWidget):
         
         self.btnwrapper.setLayout(button_layout)
         
-        layout.addLayout(button_layout)
         layout.addLayout(self.chat_display)
         layout.addWidget(self.btnwrapper)
         self.setLayout(layout)
