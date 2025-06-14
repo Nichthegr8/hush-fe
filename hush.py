@@ -71,14 +71,12 @@ class HushApp(QMainWindow):
         # --- Create all screens ---
         self.login_screen = LoginScreen(self)
         self.signup_screen = SignUpScreen(self)
-        self.home_screen = HomeScreen(self)
         self.ai_page = AIPage(self)
         self.ai_page.start_conversation()
 
         # --- Add screens to the stack ---
         self.stacked_widget.addWidget(self.login_screen)
         self.stacked_widget.addWidget(self.signup_screen)
-        self.stacked_widget.addWidget(self.home_screen)
         self.stacked_widget.addWidget(self.ai_page)
 
         main_layout = QVBoxLayout(self.central_widget)
@@ -175,14 +173,7 @@ class HushApp(QMainWindow):
 
     def login_successful(self, user_data):
         self.current_user_data = user_data
-        self.home_screen.load_profile(user_data)
-        self.stacked_widget.setCurrentWidget(self.home_screen)
-
-    def switch_to_checkin(self):
-        self.stacked_widget.setCurrentWidget(self.check_in_screen)
-
-    def switch_to_home(self):
-        self.stacked_widget.setCurrentWidget(self.home_screen)
+        self.switch_to_ai_page()
 
     def switch_to_ai_page(self):
         self.stacked_widget.setCurrentWidget(self.ai_page)
@@ -193,7 +184,7 @@ class LoginScreen(QWidget):
         super().__init__(parent)
         self.parent_window = parent
         self.init_ui()
-        self.load_cached_username()
+        self.load_cached_info()
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -239,36 +230,36 @@ class LoginScreen(QWidget):
     def attempt_login(self):
         username = self.username_input.text().strip()
         password = self.password_input.text()
-        profile_path = os.path.join(USER_PROFILES_DIR, f"{username}.json")
 
-        if not os.path.exists(profile_path):
-            self.error_label.setText("Username not found.")
-            return
+        prof_cs = connectors.profilesClientSide(config.PROFL_SERVICE_HOST)
+        prof_cs.onClientError = lambda error: self.error_label.setText(error)
+        prof_cs.onGotProfile = self.onGotProfile
+        prof_cs.log_in(username, password)
 
-        try:
-            with open(profile_path, 'r') as f:
-                user_data = json.load(f)
-            
-            if user_data['credentials']['password'] == hashlib.sha256(password.encode()).hexdigest():
-                self.cache_username(username)
-                self.parent_window.login_successful(user_data)
-            else:
-                self.error_label.setText("Incorrect password.")
-        except (json.JSONDecodeError, KeyError):
-            self.error_label.setText("Profile file is corrupted.")
+    def onGotProfile(self, profile: dict):
+        username = self.username_input.text().strip()
+        password = self.password_input.text()
+        self.cache_info(username, password)
+        self.parent_window.login_successful(profile)
     
-    def cache_username(self, username):
+    def cache_info(self, username, password):
         with open(CACHE_FILE, 'w') as f:
-            json.dump({'last_user': username}, f)
+            json.dump({'username': username, 'password': password}, f)
 
-    def load_cached_username(self):
+    def load_cached_info(self):
         if os.path.exists(CACHE_FILE):
             try:
                 with open(CACHE_FILE, 'r') as f:
                     cache = json.load(f)
-                    self.username_input.setText(cache.get('last_user', ''))
+                    self.username_input.setText(cache["username"])
+                    self.password_input.setText(cache["password"])
+                    self.attempt_login()
             except (json.JSONDecodeError, KeyError):
                 pass
+
+    def closeEvent(self, a0):
+        sys.exit(0)
+        return super().closeEvent(a0)()
 
 # --- SIGN UP SCREEN (PROFILE SETUP) ---
 class SignUpScreen(QWidget):
@@ -474,98 +465,6 @@ class SignUpScreen(QWidget):
         except IOError as e:
             self.error_label.setText(f"Error saving profile: {e}")
 
-# --- HOME SCREEN ---
-class HomeScreen(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent_window = parent
-        self.init_ui()
-
-    def init_ui(self):
-        layout = QVBoxLayout()
-        layout.setContentsMargins(50, 30, 50, 30)
-        layout.setSpacing(20)
-        layout.setAlignment(Qt.AlignTop)
-
-        self.welcome_label = QLabel()
-        self.welcome_label.setAlignment(Qt.AlignLeft)
-        layout.addWidget(self.welcome_label)
-
-        hush_title = QLabel()
-        hush_title.setPixmap(load_image("logo.png"))
-        hush_title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(hush_title)
-
-        # --- MODIFIED: Removed Emergency Button ---
-        checkin_button = QPushButton("Enter My Safe Place")
-        checkin_button.setMinimumHeight(100)
-        checkin_button.clicked.connect(self.parent_window.switch_to_checkin)
-        layout.addWidget(checkin_button)
-        
-        layout.addStretch()
-        self.setLayout(layout)
-
-    def load_profile(self, user_data):
-        first_name = user_data.get("general", {}).get("first_name", "User")
-        self.welcome_label.setText(f"<h2>Welcome, {first_name}!</h2>")
-
-
-
-        # --- MODIFIED: Removed Question 3 ---
-
-        layout = self.layout()
-        
-        q1_label = QLabel("<b>1. How are you feeling right now?</b>")
-        layout.addWidget(q1_label)
-        
-        self.feelings_group = QHBoxLayout()
-        self.sad_face = QCheckBox("😢 Sad")
-        self.anxious_face = QCheckBox("😠 Anxious")
-        self.angry_face = QCheckBox("😡 Angry")
-        self.scared_face = QCheckBox("😨 Scared")
-        self.hurt_face = QCheckBox("😣 Hurt")
-
-        self.feelings_group.addWidget(self.sad_face)
-        self.feelings_group.addWidget(self.anxious_face)
-        self.feelings_group.addWidget(self.angry_face)
-        self.feelings_group.addWidget(self.scared_face)
-        self.feelings_group.addWidget(self.hurt_face)
-
-        layout.addLayout(self.feelings_group)
-
-    
-
-        self.what_is_wrong_text = QTextEdit()
-        self.what_is_wrong_text.setPlaceholderText("You can write more here...")
-        self.what_is_wrong_text.setFixedHeight(80)
-        layout.addWidget(self.what_is_wrong_text)
-
-        layout.addStretch(1)
-
-        button_layout = QHBoxLayout()
-        back_button = QPushButton("Back")
-        back_button.clicked.connect(self.parent_window.switch_to_home)
-        submit_button = QPushButton("Submit to AI")
-        submit_button.clicked.connect(self.submit_to_ai)
-        
-        button_layout.addWidget(back_button)
-        button_layout.addStretch()
-        button_layout.addWidget(submit_button)
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
-    
-    def get_data(self):
-        data = { "feeling": "", "what_is_wrong": self.what_is_wrong_text.toPlainText().strip() }
-        if self.happy_face.isChecked(): data["feeling"] = "Happy 😊"
-        elif self.sad_face.isChecked(): data["feeling"] = "Sad 😢"
-        elif self.upset_face.isChecked(): data["feeling"] = "Upset 😠"
-        elif self.scared_face.isChecked(): data["feeling"] = "Scared 😨"
-        elif self.hurt_face.isChecked(): data["feeling"] = "Hurt 😣"
-        return data
-
-    def submit_to_ai(self):
-        self.parent_window.switch_to_ai_page()
-
 # --- AI PAGE ---
 class AIPage(QWidget):
     def __init__(self, parent):
@@ -694,7 +593,7 @@ class AIPage(QWidget):
 
         self.addlayouttostretchlay(usermessagelayout, self.chat_display)
         self.user_input.clear()
-        self.llm_cs = connectors.llmClientSide(self.parent_window.current_user_data["credentials"]["username"], config.LLM_SERVICE_HOST)
+        self.llm_cs = connectors.llmClientSide(self.parent_window.current_user_data, config.LLM_SERVICE_HOST)
         self.send.setDisabled(True)
         self.llm_cs.onendstream = lambda: self.send.setDisabled(False)
         ai_response = QLabel("")

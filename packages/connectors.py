@@ -1,11 +1,11 @@
 import packages.aistudio as aistudio
-import packages.geolocation as geolocation
 import packages.listeners as listeners
 from packages.listeners import getPrivateIp
 
 import json
 import os
 import socket
+import copy
 import hashlib
 
 import dotenv
@@ -17,7 +17,7 @@ LLM_DATA_SPLITTER = bytearray([1,1,1,1])
 
 class llmServerSide:
     def __init__(self):
-        self.studio = aistudio.AIStudio(env["apikey"])
+        self.studio = aistudio.AIStudio(env['apikey'])
         self.chats: dict[str, aistudio.Chat] = {}
 
         self.sserver = listeners.createListener(LLM_PORT)
@@ -46,13 +46,13 @@ class llmServerSide:
             return f.read()
         
     def prepare_chat(self, profile: str) -> aistudio.Chat:
-        if profile["credentials"]["username"] in self.chats:
-            chat = self.chats[profile["credentials"]["username"]]
+        profile = json.loads(profile)
+        if profile['credentials']['username'] in self.chats:
+            chat = self.chats[profile['credentials']['username']]
         else:
             chat = self.studio.get_chat(self.studio.gemini25flash)
-            self.chats[profile["credentials"]["username"]] = chat
-        location = json.dumps(geolocation.getUserLocation())
-        sysinstructions = "You are an AI to help children with different forms of autism in moments of stress or panic to calm down. Only include one question and a couple of sentences per response. Get to the point of solving the problem the user adresses and don't digress or get sidetracked, even if the profile's calming techniques includes stuff like distractions. Child profile: " + profile + ". Child location: " + location
+            self.chats[profile['credentials']['username']] = chat
+        sysinstructions = "You are an AI to help children with different forms of autism in moments of stress or panic to calm down. Only include one question and a couple of sentences per response. Get to the point of solving the problem the user adresses and don't digress or get sidetracked, even if the profile's calming techniques includes stuff like distractions. Child profile: " + json.dumps(profile)
         chat.set_system_instructions(sysinstructions)
         return chat
 
@@ -67,13 +67,14 @@ class llmServerSide:
             conn.send(part.encode())
         conn.send(self.stopStreamPckt)
         with open(self.filepath, "a") as f:
-            f.write(f"{conn.getpeername()}: Query from {profile["credentials"]["username"]}:\n\n{query}")
+            f.write(f"{conn.getpeername()}: Query from {profile['credentials']['username']}:\n\n{query}")
 
     def onclose(self, addr):
         self.log(f"{addr}: Connection closed")
 
     def onerror(self, conn: socket.socket, e: Exception):
-        self.log(f"{conn.getpeername()}: Exception in connection: {e}")
+        #self.log(f"{conn.getpeername()}: Exception in connection: {e}")
+        raise
 
 class llmClientSide:
     def __init__(self, profile, host):
@@ -135,33 +136,41 @@ class profilesServerSide:
         profile_path = os.path.join("user_profiles", f"{username}.json")
         if os.path.exists(profile_path):
             with open(profile_path)as f:
-                conn.send(bytearray([self.logInAcceptPckt])+f.read().encode())
+                profile = json.loads(f.read())
+                if hashlib.sha256(password.encode()).hexdigest() == profile["credentials"]["password"]:
+                    conn.send(bytearray([self.logInAcceptPckt])+json.dumps(profile).encode())
+                else:
+                    conn.send(bytearray([self.errorPcktType])+b"Invalid password")
         else:
-            conn.send(bytearray([self.errorPcktType])+b"")
+            conn.send(bytearray([self.errorPcktType])+b"Profile does not exist. Please create a profile first.")
 
     def onSignUp(self, conn: socket.socket, profile):
-        profile_path = os.path.join("user_profiles", f"{profile["credentials"]["username"]}.json")
+        profile_path = os.path.join("user_profiles", f"{profile['credentials']['username']}.json")
         if os.path.exists(profile_path):
             conn.send(bytearray([self.errorPcktType])+b"Username is taken")
         else:
             with open(profile_path, "w+")as f:
+                profile2 = copy.copy(profile)
+                profile2["credentials"] = {
+                    "username" : profile2["username"],
+                    "password" : profile2["passwordhash"]
+                }
                 f.write(json.dumps(profile))
 
     def onopen(self, conn: socket.socket):
         self.log(f"Connection from {conn.getpeername()}")
 
     def onmessage(self, conn: socket.socket, data: bytes):
-        try:
             logging_in = data[0] == self.logInPcktType
             data = json.loads(data[1:])
             if not logging_in:
                 required_keys = {
-                    "credentials": ["username", "password"],
-                    "general": ["first_name", "last_name", "gender", "dob"],
-                    "diagnosis": ["autism_type", "communication_styles"],
-                    "calming": ["image_themes", "sound_themes", "techniques"],
-                    "triggers": ["anxieties", "sensitivities"],
-                    "emergency": ["primary_contact_name", "relationship", "phone", "gps"]
+                    "credentials": ['username", "password'],
+                    "general": ['first_name", "last_name", "gender", "dob'],
+                    "diagnosis": ['autism_type", "communication_styles'],
+                    "calming": ['image_themes", "sound_themes", "techniques'],
+                    "triggers": ['anxieties", "sensitivities'],
+                    "emergency": ['primary_contact_name", "relationship", "phone", "gps']
                 }
 
                 # Check all top-level keys exist
@@ -176,26 +185,23 @@ class profilesServerSide:
                         if subkey not in data[section]:
                             conn.send(bytearray([self.errorPcktType])+b"Invalid profile")
 
-                if not isinstance(data["diagnosis"]["communication_styles"], list):
+                if not isinstance(data['diagnosis']['communication_styles'], list):
                     conn.send(bytearray([self.errorPcktType])+b"Invalid profile")
-                if not isinstance(data["calming"]["image_themes"], list):
+                if not isinstance(data['calming']['image_themes'], list):
                     conn.send(bytearray([self.errorPcktType])+b"Invalid profile")
-                if not isinstance(data["calming"]["sound_themes"], list):
+                if not isinstance(data['calming']['sound_themes'], list):
                     conn.send(bytearray([self.errorPcktType])+b"Invalid profile")
-                if not isinstance(data["triggers"]["anxieties"], list):
+                if not isinstance(data['triggers']['anxieties'], list):
                     conn.send(bytearray([self.errorPcktType])+b"Invalid profile")
+                data['credentials']['passwordhash'] = hashlib.sha256(data['credentials']['password'].encode()).hexdigest()
+                self.onSignUp(data)
             else:
                 if (not "username" in data) or (not "password" in data):
+                    self.log(f"{conn.getpeername()}: Login attempt: did not provide credentials")
                     conn.send(bytearray([self.errorPcktType])+b"Please provide username and password")
                 else:
-                    self.onAttemptLogIn(conn, data["username"], data["password"])
-                
-        except:
-            self.log(f"{conn.getpeername()}: Sent invalid signup or login")
-            return
-        
-
-        data["credentials"]["passwordhash"] = hashlib.sha256(data["credentials"]["password"].encode()).hexdigest()
+                    self.log(f"{conn.getpeername()}: Login attempt: USER = {data['username']}, PWD = {data['password']}")
+                    self.onAttemptLogIn(conn, data['username'], data['password'])
 
     def onclose(self, addr):
         self.log(f"{addr}: Connection closed")
@@ -204,8 +210,7 @@ class profilesServerSide:
         self.log(f"{conn.getpeername()}: Exception in connection: {e}")
 
 class profilesClientSide:
-    def __init__(self, name, host):
-        self.name = name
+    def __init__(self, host):
 
         self.sclient = listeners.connectToListener(host, PROFL_PORT)
         self.logInPcktType = 2
@@ -213,14 +218,13 @@ class profilesClientSide:
         self.errorPcktType = 4
         self.logInAcceptPcktType = 5
 
+        self.sclient.onmessage = self.onmessage
+
+        self.onGotProfile = lambda profile:print("Called ongotprofile")
+        self.onClientError = lambda error:None
+
         if not self.sclient.running:
             raise Exception("Server is offline")
-        
-    def onClientError(self, error: str):
-        pass
-
-    def onGotProfile(self, profile):
-        pass
         
     def onmessage(self, conn: socket.socket, data):
         if data[0] == self.errorPcktType:
