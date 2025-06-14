@@ -45,13 +45,12 @@ class llmServerSide:
         with open(os.path.join(os.getcwd(), "user_profiles", f"{name}.json"))as f:
             return f.read()
         
-    def prepare_chat(self, name: str) -> aistudio.Chat:
-        if name in self.chats:
-            chat = self.chats[name]
+    def prepare_chat(self, profile: str) -> aistudio.Chat:
+        if profile["credentials"]["username"] in self.chats:
+            chat = self.chats[profile["credentials"]["username"]]
         else:
             chat = self.studio.get_chat(self.studio.gemini25flash)
-            self.chats[name] = chat
-        profile = self.load_profile(name)
+            self.chats[profile["credentials"]["username"]] = chat
         location = json.dumps(geolocation.getUserLocation())
         sysinstructions = "You are an AI to help children with different forms of autism in moments of stress or panic to calm down. Only include one question and a couple of sentences per response. Get to the point of solving the problem the user adresses and don't digress or get sidetracked, even if the profile's calming techniques includes stuff like distractions. Child profile: " + profile + ". Child location: " + location
         chat.set_system_instructions(sysinstructions)
@@ -59,8 +58,8 @@ class llmServerSide:
 
     def onmessage(self, conn: socket.socket, data: bytes):
         parts = data.split(LLM_DATA_SPLITTER)
-        child = parts[0]
-        chat = self.prepare_chat(child.decode())
+        profile = parts[0]
+        chat = self.prepare_chat(profile.decode())
 
         query = parts[1].decode('utf-8')
         conn.send(self.startStreamPckt)
@@ -68,7 +67,7 @@ class llmServerSide:
             conn.send(part.encode())
         conn.send(self.stopStreamPckt)
         with open(self.filepath, "a") as f:
-            f.write(f"{conn.getpeername()}: Query from {child}:\n\n{query}")
+            f.write(f"{conn.getpeername()}: Query from {profile["credentials"]["username"]}:\n\n{query}")
 
     def onclose(self, addr):
         self.log(f"{addr}: Connection closed")
@@ -77,8 +76,8 @@ class llmServerSide:
         self.log(f"{conn.getpeername()}: Exception in connection: {e}")
 
 class llmClientSide:
-    def __init__(self, name, host):
-        self.name = name
+    def __init__(self, profile, host):
+        self.profile = profile
         self.startStreamPckt = 2
         self.stopStreamPckt = 3
 
@@ -110,15 +109,15 @@ class llmClientSide:
                 self.addToStream(message.decode())
 
     def generate_response(self, query: str):
-        payload = self.name.encode() + LLM_DATA_SPLITTER + query.encode()
+        payload = json.dumps(self.profile).encode() + LLM_DATA_SPLITTER + query.encode()
         self.sclient.send(payload)
-
 
 class profilesServerSide:
     def __init__(self):
         self.sserver = listeners.createListener(PROFL_PORT)
 
         self.logInPcktType = 2
+        self.logInAcceptPckt = 5
         self.errorPcktType = 4
 
         self.sserver.onopen = self.onopen
@@ -135,12 +134,18 @@ class profilesServerSide:
     def onAttemptLogIn(self, conn: socket.socket, username, password):
         profile_path = os.path.join("user_profiles", f"{username}.json")
         if os.path.exists(profile_path):
-            pass
+            with open(profile_path)as f:
+                conn.send(bytearray([self.logInAcceptPckt])+f.read().encode())
         else:
             conn.send(bytearray([self.errorPcktType])+b"")
 
-    def onSignUp(self, profile):
-        pass
+    def onSignUp(self, conn: socket.socket, profile):
+        profile_path = os.path.join("user_profiles", f"{profile["credentials"]["username"]}.json")
+        if os.path.exists(profile_path):
+            conn.send(bytearray([self.errorPcktType])+b"Username is taken")
+        else:
+            with open(profile_path, "w+")as f:
+                f.write(json.dumps(profile))
 
     def onopen(self, conn: socket.socket):
         self.log(f"Connection from {conn.getpeername()}")
@@ -206,16 +211,22 @@ class profilesClientSide:
         self.logInPcktType = 2
         self.signUpPcktType = 3
         self.errorPcktType = 4
+        self.logInAcceptPcktType = 5
 
         if not self.sclient.running:
             raise Exception("Server is offline")
         
     def onClientError(self, error: str):
         pass
+
+    def onGotProfile(self, profile):
+        pass
         
     def onmessage(self, conn: socket.socket, data):
         if data[0] == self.errorPcktType:
-            self.onError(data[1:])
+            self.onClientError(data[1:].decode())
+        elif data[0] == self.logInAcceptPcktType:
+            self.onGotProfile(json.loads(data[1:]))
 
     def log_in(self, username, password):
         self.sclient.send(bytearray([self.logInPcktType])+json.dumps({"username":username,"password":password}).encode())
