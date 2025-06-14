@@ -6,6 +6,7 @@ from packages.listeners import getPrivateIp
 import json
 import os
 import socket
+import hashlib
 
 import dotenv
 env = dotenv.dotenv_values()
@@ -117,6 +118,9 @@ class profilesServerSide:
     def __init__(self):
         self.sserver = listeners.createListener(PROFL_PORT)
 
+        self.logInPcktType = 2
+        self.errorPcktType = 4
+
         self.sserver.onopen = self.onopen
         self.sserver.onmessage = self.onmessage
         self.sserver.onclose = self.onclose
@@ -128,7 +132,14 @@ class profilesServerSide:
     def log(self, text: str):
         print("[+] PROFL Service: "+text)
 
-    def onJsonRecv(self, json_profile):
+    def onAttemptLogIn(self, conn: socket.socket, username, password):
+        profile_path = os.path.join("user_profiles", f"{username}.json")
+        if os.path.exists(profile_path):
+            pass
+        else:
+            conn.send(bytearray([self.errorPcktType])+b"")
+
+    def onSignUp(self, profile):
         pass
 
     def onopen(self, conn: socket.socket):
@@ -136,44 +147,50 @@ class profilesServerSide:
 
     def onmessage(self, conn: socket.socket, data: bytes):
         try:
-            data = json.loads(data)
+            logging_in = data[0] == self.logInPcktType
+            data = json.loads(data[1:])
+            if not logging_in:
+                required_keys = {
+                    "credentials": ["username", "password"],
+                    "general": ["first_name", "last_name", "gender", "dob"],
+                    "diagnosis": ["autism_type", "communication_styles"],
+                    "calming": ["image_themes", "sound_themes", "techniques"],
+                    "triggers": ["anxieties", "sensitivities"],
+                    "emergency": ["primary_contact_name", "relationship", "phone", "gps"]
+                }
 
-            required_keys = {
-                "credentials": ["username", "password"],
-                "general": ["first_name", "last_name", "gender", "dob"],
-                "diagnosis": ["autism_type", "communication_styles"],
-                "calming": ["image_themes", "sound_themes", "techniques"],
-                "triggers": ["anxieties", "sensitivities"],
-                "emergency": ["primary_contact_name", "relationship", "phone", "gps"]
-            }
+                # Check all top-level keys exist
+                if not all(key in data for key in required_keys):
+                    conn.send(bytearray([self.errorPcktType])+b"Invalid profile")
 
-            # Check all top-level keys exist
-            if not all(key in data for key in required_keys):
-                raise
+                # Check all subkeys exist
+                for section, subkeys in required_keys.items():
+                    if not isinstance(data[section], dict):
+                        conn.send(bytearray([self.errorPcktType])+b"Invalid profile")
+                    for subkey in subkeys:
+                        if subkey not in data[section]:
+                            conn.send(bytearray([self.errorPcktType])+b"Invalid profile")
 
-            # Check all subkeys exist
-            for section, subkeys in required_keys.items():
-                if not isinstance(data[section], dict):
-                    raise
-                for subkey in subkeys:
-                    if subkey not in data[section]:
-                        raise
-
-            # Check lists are lists (optional, but recommended)
-            if not isinstance(data["diagnosis"]["communication_styles"], list):
-                raise
-            if not isinstance(data["calming"]["image_themes"], list):
-                raise
-            if not isinstance(data["calming"]["sound_themes"], list):
-                raise
-            if not isinstance(data["triggers"]["anxieties"], list):
-                raise
-
+                if not isinstance(data["diagnosis"]["communication_styles"], list):
+                    conn.send(bytearray([self.errorPcktType])+b"Invalid profile")
+                if not isinstance(data["calming"]["image_themes"], list):
+                    conn.send(bytearray([self.errorPcktType])+b"Invalid profile")
+                if not isinstance(data["calming"]["sound_themes"], list):
+                    conn.send(bytearray([self.errorPcktType])+b"Invalid profile")
+                if not isinstance(data["triggers"]["anxieties"], list):
+                    conn.send(bytearray([self.errorPcktType])+b"Invalid profile")
+            else:
+                if (not "username" in data) or (not "password" in data):
+                    conn.send(bytearray([self.errorPcktType])+b"Please provide username and password")
+                else:
+                    self.onAttemptLogIn(conn, data["username"], data["password"])
+                
         except:
-            self.log(f"{conn.getpeername()}: Sent invalid profile")
+            self.log(f"{conn.getpeername()}: Sent invalid signup or login")
             return
         
-        self.onJsonRecv(data)
+
+        data["credentials"]["passwordhash"] = hashlib.sha256(data["credentials"]["password"].encode()).hexdigest()
 
     def onclose(self, addr):
         self.log(f"{addr}: Connection closed")
@@ -186,9 +203,22 @@ class profilesClientSide:
         self.name = name
 
         self.sclient = listeners.connectToListener(host, PROFL_PORT)
+        self.logInPcktType = 2
+        self.signUpPcktType = 3
+        self.errorPcktType = 4
 
         if not self.sclient.running:
             raise Exception("Server is offline")
+        
+    def onClientError(self, error: str):
+        pass
+        
+    def onmessage(self, conn: socket.socket, data):
+        if data[0] == self.errorPcktType:
+            self.onError(data[1:])
 
-    def send_profile(self, profile):
-        self.sclient.send(json.dumps(profile))
+    def log_in(self, username, password):
+        self.sclient.send(bytearray([self.logInPcktType])+json.dumps({"username":username,"password":password}).encode())
+
+    def sign_up(self, profile):
+        self.sclient.send(bytearray([self.signUpPcktType])+json.dumps(profile).encode())

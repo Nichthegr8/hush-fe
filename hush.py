@@ -467,7 +467,7 @@ class SignUpScreen(QWidget):
             }
         }
 
-        # --- Save data to file and log in ---
+        # --- Send data ---
         try:
             with open(profile_path, 'w') as f:
                 json.dump(profile_data, f, indent=4)
