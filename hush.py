@@ -601,6 +601,12 @@ class AIPage(QWidget):
         self.send.clicked.connect(self.send_message)
         self.send.setObjectName("SendButton")
 
+        self.camera = QPushButton(QIcon("camera.png"), "", None)
+        self.camera.setObjectName("SendButton")
+
+        self.mic = QPushButton(QIcon("microphone.png"), "", None)
+        self.mic.setObjectName("SendButton")
+
         self.user_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.send.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
@@ -609,6 +615,8 @@ class AIPage(QWidget):
         self.send.setFixedHeight(fixed_height)
         self.send.setFixedWidth(fixed_height)
         
+        button_layout.addWidget(self.mic)
+        button_layout.addWidget(self.camera)     
         button_layout.addWidget(self.user_input)
         button_layout.addWidget(self.send)
 
