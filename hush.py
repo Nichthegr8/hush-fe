@@ -417,15 +417,6 @@ class SignUpScreen(QWidget):
         username = self.username_input.text().strip()
         password = self.password_input.text()
 
-        if not username or not password:
-            self.error_label.setText("Username and Password cannot be empty.")
-            return
-        
-        profile_path = os.path.join(USER_PROFILES_DIR, f"{username}.json")
-        if os.path.exists(profile_path):
-            self.error_label.setText("This username is already taken.")
-            return
-
         # --- Gather all data into a dictionary ---
         profile_data = {
             "credentials": {
@@ -463,10 +454,10 @@ class SignUpScreen(QWidget):
 
         # --- Save data to file and log in ---
         try:
-            with open(profile_path, 'w') as f:
-                json.dump(profile_data, f, indent=4)
-            # Automatically log in the user after successful creation
-            self.parent_window.login_successful(profile_data)
+            profl_cs = connectors.profilesClientSide(config.PROFL_SERVICE_HOST)
+            profl_cs.sign_up(profile_data)
+            profl_cs.onClientError = lambda error: self.error_label.setText(error)
+            profl_cs.onSignupSuccess = lambda: self.parent_window.switch_to_login()
         except IOError as e:
             self.error_label.setText(f"Error saving profile: {e}")
 
