@@ -1,3 +1,4 @@
+import hashlib
 import sys
 import json
 import os
@@ -5,6 +6,9 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PIL.ImageQt import ImageQt, Image
+
+import packages.connectors as connectors
+import packages.config as config
 
 # --- Constants ---
 USER_PROFILES_DIR = "user_profiles"
@@ -14,7 +18,9 @@ ACCENT_COLOR = "#4D6A92"      # Softer steel-blue for highlights
 TEXT_COLOR = "#424242"        # Neutral dark gray—unchanged
 EMERGENCY_COLOR = "#D32F2F"    # Strong red—unchanged
 BACKGROUND_COLOR = "#B4D6E3"  # Light, airy blue background
+ROUNDEDWIDGET_COLOR = "#C4E6F3"  # Light, airy blue background
 ERROR_COLOR = "#D32F2F"        # Same red for errors
+FONT_SIZE = "20px"
 
 # --- Helper Functions --
 def load_image(image_path):
@@ -27,6 +33,24 @@ def load_image(image_path):
     qim = ImageQt(img)
     pix = QPixmap.fromImage(qim)
     return pix
+
+# --- Rounded widget ---
+
+class RoundedWidget(QWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setMinimumHeight(50)
+        self.setContentsMargins(12, 12, 12, 12)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        rect = self.rect()
+        color = QColor(ROUNDEDWIDGET_COLOR)
+        painter.setBrush(QBrush(color))
+        painter.setPen(Qt.NoPen)
+        painter.drawRoundedRect(rect, 42, 42)
+        super().paintEvent(event)
 
 # --- Main Application Window ---
 class HushApp(QMainWindow):
@@ -50,6 +74,7 @@ class HushApp(QMainWindow):
         self.home_screen = HomeScreen(self)
         self.check_in_screen = CheckInScreen(self)
         self.ai_page = AIPage(self)
+        self.ai_page.start_conversation()
 
         # --- Add screens to the stack ---
         self.stacked_widget.addWidget(self.login_screen)
@@ -76,12 +101,15 @@ class HushApp(QMainWindow):
                 border: none;
             }}
             QGroupBox {{
-                font-size: 20px;
+                font-size: {FONT_SIZE};
                 font-weight: bold;
                 color: {PRIMARY_COLOR};
                 border: 2px solid {ACCENT_COLOR};
                 border-radius: 8px;
                 margin-top: 10px;
+            }}
+            QCheckBox {{
+                font-size: {FONT_SIZE};
             }}
             QGroupBox::title {{
                 subcontrol-origin: margin;
@@ -90,17 +118,17 @@ class HushApp(QMainWindow):
             }}
             QLabel {{
                 color: {TEXT_COLOR};
-                font-size: 16px;
+                font-size: {FONT_SIZE};
             }}
             QLabel#Title {{
-                font-size: 48px;
+                font-size: {FONT_SIZE};
                 font-weight: bold;
                 color: {PRIMARY_COLOR};
                 padding-bottom: 10px;
             }}
             QLabel#ErrorLabel {{
                 color: {ERROR_COLOR};
-                font-size: 14px;
+                font-size: {FONT_SIZE};
                 font-weight: bold;
             }}
             QPushButton {{
@@ -108,7 +136,7 @@ class HushApp(QMainWindow):
                 color: white;
                 border: none;
                 padding: 15px 20px;
-                font-size: 18px;
+                font-size: {FONT_SIZE};
                 border-radius: 8px;
                 font-weight: bold;
             }}
@@ -120,7 +148,7 @@ class HushApp(QMainWindow):
                 border: 2px solid {PRIMARY_COLOR};
                 border-radius: 8px;
                 padding: 10px;
-                font-size: 16px;
+                font-size: {FONT_SIZE};
                 color: {TEXT_COLOR};
             }}
             QTextEdit#ChatDisplay {{
@@ -130,7 +158,7 @@ class HushApp(QMainWindow):
             QPushButton#LinkButton {{
                 background-color: transparent;
                 color: {PRIMARY_COLOR};
-                font-size: 14px;
+                font-size: {FONT_SIZE};
                 text-decoration: underline;
                 padding: 5px;
                 border: none;
@@ -158,8 +186,7 @@ class HushApp(QMainWindow):
     def switch_to_home(self):
         self.stacked_widget.setCurrentWidget(self.home_screen)
 
-    def switch_to_ai_page(self, initial_context=None):
-        self.ai_page.start_conversation(initial_context)
+    def switch_to_ai_page(self):
         self.stacked_widget.setCurrentWidget(self.ai_page)
 
 # --- LOGIN SCREEN ---
@@ -224,8 +251,7 @@ class LoginScreen(QWidget):
             with open(profile_path, 'r') as f:
                 user_data = json.load(f)
             
-            # NOTE: This is NOT a secure way to handle passwords. For prototyping only.
-            if user_data['credentials']['password'] == password:
+            if user_data['credentials']['password'] == hashlib.sha256(password.encode()).hexdigest():
                 self.cache_username(username)
                 self.parent_window.login_successful(user_data)
             else:
@@ -412,7 +438,7 @@ class SignUpScreen(QWidget):
         profile_data = {
             "credentials": {
                 "username": username,
-                "password": password # INSECURE: FOR PROTOTYPE ONLY
+                "password": hashlib.sha256(password.encode()).hexdigest()
             },
             "general": {
                 "first_name": self.first_name_input.text(),
@@ -442,7 +468,7 @@ class SignUpScreen(QWidget):
                 "gps": self.e_gps_tracking.currentText()
             }
         }
-        
+
         # --- Save data to file and log in ---
         try:
             with open(profile_path, 'w') as f:
@@ -547,8 +573,7 @@ class CheckInScreen(QWidget):
         return data
 
     def submit_to_ai(self):
-        checkin_data = self.get_data()
-        self.parent_window.switch_to_ai_page(initial_context=checkin_data)
+        self.parent_window.switch_to_ai_page()
 
 # --- AI PAGE ---
 class AIPage(QWidget):
@@ -559,46 +584,115 @@ class AIPage(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout()
-        self.chat_display = QTextEdit()
+        self.chat_display = QVBoxLayout()
         self.chat_display.setObjectName("ChatDisplay")
-        self.chat_display.setReadOnly(True)
+        self.chat_display.addStretch(1)
+
+        self.btnwrapper = RoundedWidget()
+        button_layout = QHBoxLayout()
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        button_layout.setSpacing(0)
+
         self.user_input = QLineEdit()
         self.user_input.setPlaceholderText("Type here to talk to me...")
-        send_button = QPushButton("Send")
-        send_button.clicked.connect(self.send_message)
         self.user_input.returnPressed.connect(self.send_message)
-        
-        input_layout = QHBoxLayout()
-        input_layout.addWidget(self.user_input)
-        input_layout.addWidget(send_button)
 
-        back_button = QPushButton("Back to Home")
-        back_button.clicked.connect(self.parent_window.switch_to_home)
+        self.send = QPushButton(QIcon("up_arrow.png"), "", None)
+        self.send.clicked.connect(self.send_message)
+        self.send.setObjectName("SendButton")
+
+        self.user_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.send.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        fixed_height = 50
+        self.user_input.setFixedHeight(fixed_height+10)
+        self.send.setFixedHeight(fixed_height)
+        self.send.setFixedWidth(fixed_height)
         
-        layout.addWidget(self.chat_display)
-        layout.addLayout(input_layout)
-        layout.addWidget(back_button, alignment=Qt.AlignCenter)
+        button_layout.addWidget(self.user_input)
+        button_layout.addWidget(self.send)
+
+        self.btnwrapper.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {ROUNDEDWIDGET_COLOR};
+                border: 2px solid {ROUNDEDWIDGET_COLOR};
+                padding: 10px;
+                font-size: {FONT_SIZE};
+                color: {TEXT_COLOR};
+            }}
+            QPushButton#SendButton {{
+                border-radius: 25px;
+            }}""")
+        #line = QFrame()
+        #line.setFrameShape(QFrame.HLine)
+        #line.setFrameShadow(QFrame.Sunken)
+        #line.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        
+        self.btnwrapper.setLayout(button_layout)
+        
+        layout.addLayout(button_layout)
+        layout.addLayout(self.chat_display)
+        #layout.addWidget(line)
+        layout.addWidget(self.btnwrapper)
         self.setLayout(layout)
 
-    def start_conversation(self, initial_context=None):
-        self.chat_display.clear()
-        if initial_context:
-            self.chat_display.append("<b style='color:#0D3B66;'>HUSH AI:</b> Thanks for checking in. I see that:")
-            if initial_context.get("feeling"): self.chat_display.append(f"- You're feeling: {initial_context['feeling']}")
-            if initial_context.get("what_is_wrong"): self.chat_display.append(f"- The problem is: {initial_context['what_is_wrong']}")
-            self.chat_display.append("<br><b style='color:#0D3B66;'>HUSH AI:</b> I'm here for you. Please tell me more.")
-        else:
-            self.chat_display.append("<b style='color:#0D3B66;'>HUSH AI:</b> I'm here to help. Tell me what's happening.")
+    def start_conversation(self):
+        self.addwidgettostretchlay(QLabel("I'm here to help. Tell me what's happening."), self.chat_display)
         self.user_input.setFocus()
+
+    def addwidgettostretchlay(self, widget, layout: QBoxLayout):
+        stretch_index = layout.count()
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if item.spacerItem() is not None:
+                stretch_index = i
+                break
+        layout.insertWidget(stretch_index, widget)
+
+    def addlayouttostretchlay(self, widget, layout: QBoxLayout):
+        stretch_index = layout.count()
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if item.spacerItem() is not None:
+                stretch_index = i
+                break
+        layout.insertLayout(stretch_index, widget)
     
     def send_message(self):
         user_text = self.user_input.text().strip()
         if not user_text: return
-        self.chat_display.append(f"<b style='color:#4D6A92;'>You:</b> {user_text}")
+
+        usermessagewidget = QWidget()
+        layout = QHBoxLayout(usermessagewidget)
+        layout.addStretch(1)
+        usermessagewidget.setStyleSheet("""background-color: #d2f0ff;
+                            color: #000;
+                            padding: 10px;
+                            border-radius: 12px;
+                            font-size: 15px;
+                            margin: 6px 0;
+                            max-width: 75%;""")
+        layout.addWidget(QLabel(user_text))
+        usermessagewidget.setLayout(layout)
+
+        usermessagelayout = QHBoxLayout()
+        usermessagelayout.addStretch(1)
+        usermessagelayout.addWidget(usermessagewidget)
+
+        self.addlayouttostretchlay(usermessagelayout, self.chat_display)
         self.user_input.clear()
-        ai_response = "I understand. Thank you for sharing. What else is on your mind?"
-        self.chat_display.append(f"<b style='color:#0D3B66;'>HUSH AI:</b> {ai_response}")
-        self.chat_display.verticalScrollBar().setValue(self.chat_display.verticalScrollBar().maximum())
+        self.llm_cs = connectors.llmClientSide(self.parent_window.current_user_data["credentials"]["username"], config.LLM_SERVICE_HOST)
+        self.send.setDisabled(True)
+        self.llm_cs.onendstream = lambda: self.send.setDisabled(False)
+        ai_response = QLabel("")
+        self.llm_cs.addToStream = lambda text: self.onStreamPartRecieved(text, ai_response)
+        self.llm_cs.generate_response(user_text)
+        self.addwidgettostretchlay(ai_response, self.chat_display)
+        
+        #self.chat_display.verticalScrollBar().setValue(self.chat_display.verticalScrollBar().maximum())
+
+    def onStreamPartRecieved(self, text: str, qlabel: QLabel):
+        qlabel.setText(qlabel.text()+text)
 
 # --- Main Execution ---
 if __name__ == "__main__":

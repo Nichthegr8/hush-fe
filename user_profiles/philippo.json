@@ -1,0 +1,41 @@
+{
+    "credentials": {
+        "username": "philippo",
+        "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+    },
+    "general": {
+        "first_name": "Philippo",
+        "last_name": "",
+        "gender": "Male",
+        "dob": "2012-08-29"
+    },
+    "diagnosis": {
+        "autism_type": "Asperger's",
+        "communication_styles": [
+            "Verbal"
+        ]
+    },
+    "calming": {
+        "image_themes": [
+            "Dark, simple images"
+        ],
+        "sound_themes": [
+            "Nature sounds (rain, birds)"
+        ],
+        "techniques": ""
+    },
+    "triggers": {
+        "anxieties": [
+            "Large crowds or loud places",
+            "Unexpected changes in routine",
+            "Social interactions"
+        ],
+        "sensitivities": "Bright lights, loud sounds"
+    },
+    "emergency": {
+        "primary_contact_name": "Mom",
+        "relationship": "Mother",
+        "phone": "+30 697 682 6030",
+        "gps": "Always"
+    }
+}

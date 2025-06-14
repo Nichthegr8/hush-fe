@@ -1,3 +1,0 @@
-import sockcomm
-
-sockcomm.socketClient()
