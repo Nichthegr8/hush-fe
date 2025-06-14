@@ -470,8 +470,6 @@ class SignUpScreen(QWidget):
         except IOError as e:
             self.error_label.setText(f"Error saving profile: {e}")
 
-# --- AI Page ---
-
 class AIPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
