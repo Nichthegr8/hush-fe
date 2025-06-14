@@ -72,7 +72,6 @@ class HushApp(QMainWindow):
         self.login_screen = LoginScreen(self)
         self.signup_screen = SignUpScreen(self)
         self.home_screen = HomeScreen(self)
-        self.check_in_screen = CheckInScreen(self)
         self.ai_page = AIPage(self)
         self.ai_page.start_conversation()
 
@@ -80,7 +79,6 @@ class HushApp(QMainWindow):
         self.stacked_widget.addWidget(self.login_screen)
         self.stacked_widget.addWidget(self.signup_screen)
         self.stacked_widget.addWidget(self.home_screen)
-        self.stacked_widget.addWidget(self.check_in_screen)
         self.stacked_widget.addWidget(self.ai_page)
 
         main_layout = QVBoxLayout(self.central_widget)
@@ -511,35 +509,28 @@ class HomeScreen(QWidget):
         first_name = user_data.get("general", {}).get("first_name", "User")
         self.welcome_label.setText(f"<h2>Welcome, {first_name}!</h2>")
 
-# --- CHECK-IN SCREEN ---
-class CheckInScreen(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent_window = parent
-        self.init_ui()
 
-    def init_ui(self):
-        layout = QVBoxLayout()
-        layout.setContentsMargins(50, 30, 50, 30)
-        layout.setSpacing(15)
-        layout.setAlignment(Qt.AlignTop)
-
-        title_label = QLabel("How Are You Feeling?")
-        title_label.setObjectName("Title")
-        title_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title_label)
 
         # --- MODIFIED: Removed Question 3 ---
+
+        layout = self.layout()
+        
         q1_label = QLabel("<b>1. How are you feeling right now?</b>")
         layout.addWidget(q1_label)
         
         self.feelings_group = QHBoxLayout()
-        self.happy_face = QCheckBox("😊 Happy")
         self.sad_face = QCheckBox("😢 Sad")
-        self.upset_face = QCheckBox("😠 Upset")
-        self.feelings_group.addWidget(self.happy_face)
+        self.anxious_face = QCheckBox("😠 Anxious")
+        self.angry_face = QCheckBox("😡 Angry")
+        self.scared_face = QCheckBox("😨 Scared")
+        self.hurt_face = QCheckBox("😣 Hurt")
+
         self.feelings_group.addWidget(self.sad_face)
-        self.feelings_group.addWidget(self.upset_face)
+        self.feelings_group.addWidget(self.anxious_face)
+        self.feelings_group.addWidget(self.angry_face)
+        self.feelings_group.addWidget(self.scared_face)
+        self.feelings_group.addWidget(self.hurt_face)
+
         layout.addLayout(self.feelings_group)
 
     
@@ -568,6 +559,8 @@ class CheckInScreen(QWidget):
         if self.happy_face.isChecked(): data["feeling"] = "Happy 😊"
         elif self.sad_face.isChecked(): data["feeling"] = "Sad 😢"
         elif self.upset_face.isChecked(): data["feeling"] = "Upset 😠"
+        elif self.scared_face.isChecked(): data["feeling"] = "Scared 😨"
+        elif self.hurt_face.isChecked(): data["feeling"] = "Hurt 😣"
         return data
 
     def submit_to_ai(self):
@@ -582,6 +575,25 @@ class AIPage(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout()
+        
+        q1_label = QLabel("<b>1. How are you feeling right now?</b>")
+        layout.addWidget(q1_label)
+        
+        self.feelings_group = QHBoxLayout()
+        self.sad_face = QCheckBox("😢 Sad")
+        self.anxious_face = QCheckBox("😠 Anxious")
+        self.angry_face = QCheckBox("😡 Angry")
+        self.scared_face = QCheckBox("😨 Scared")
+        self.hurt_face = QCheckBox("😣 Hurt")
+
+        self.feelings_group.addWidget(self.sad_face)
+        self.feelings_group.addWidget(self.anxious_face)
+        self.feelings_group.addWidget(self.angry_face)
+        self.feelings_group.addWidget(self.scared_face)
+        self.feelings_group.addWidget(self.hurt_face)
+
+        layout.addLayout(self.feelings_group)
+
         self.chat_display = QVBoxLayout()
         self.chat_display.setObjectName("ChatDisplay")
         self.chat_display.addStretch(1)
