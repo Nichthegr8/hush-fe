@@ -124,4 +124,22 @@ hi('127.0.0.1', 62331): Query from philippo:
 
 {'input-type': 'text', 'content': 'not right now'}('127.0.0.1', 35091): Query from philippo:
 
-{'input-type': 'text', 'content': 'no'}
+{'input-type': 'text', 'content': 'no'}('127.0.0.1', 35409): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Anxious'}('127.0.0.1', 35434): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Anxious'}('127.0.0.1', 35434): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Anxious'}('127.0.0.1', 35434): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Anxious'}('127.0.0.1', 35448): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Anxious'}('127.0.0.1', 35448): Query from philippo:
+
+{'input-type': 'text', 'content': 'no, not right now'}('127.0.0.1', 35448): Query from philippo:
+
+{'input-type': 'text', 'content': 'no'}('127.0.0.1', 35448): Query from philippo:
+
+{'input-type': 'text', 'content': 'i cant find my mom'}('127.0.0.1', 35448): Query from philippo:
+
+{'input-type': 'text', 'content': 'I don't know'}

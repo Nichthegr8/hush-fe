@@ -27,11 +27,10 @@ ERROR_COLOR = "#D32F2F"        # Same red for errors
 FONT_SIZE = "20px"
 
 # --- Helper Functions --
-def load_image(image_path):
+def load_image(image_path, scaleFactor=.3):
     if not os.path.exists(image_path):
         print(f"Warning: Image file not found at '{image_path}'.")
         return QPixmap()
-    scaleFactor = 0.5
     img = Image.open(image_path)
     img = img.resize((int(img.width * scaleFactor), int(img.height * scaleFactor)))
     qim = ImageQt(img)
@@ -523,10 +522,10 @@ class AIPage(QWidget):
         self.feelings_group = QHBoxLayout()
         feelings = [
             ("😢", "Sad"),
-            ("😠", "Anxious"),
+            ("😟", "Anxious"),
             ("😡", "Angry"),
             ("😨", "Scared"),
-            ("😣", "Hurt"),
+            ("🤕", "Hurt"),
         ]
 
         for emoji, text in feelings:
@@ -541,37 +540,41 @@ class AIPage(QWidget):
 
         self.setLayout(layout)
         
-        emergency_button = QPushButton("I need help")
-        emergency_button.setFixedWidth(257)
+        emergency_button = QPushButton("HELP")
+        emergency_button.setStyleSheet("QPushButton { font-weight: bold; }")
+        emergency_button.setFixedWidth(457)
+        emergency_button.setFixedHeight(80)
         
-        menu_button = QPushButton("m")
+        menu_label = QLabel()
+        menu_label.setPixmap(load_image("logo.png"))
         
-        menu_button.setFixedHeight(50)
-        menu_button.setFixedWidth(50)
+        menu_label.setFixedHeight(100)
+        menu_label.setFixedWidth(100)
 
-        menu_button.setStyleSheet(f"""
+        menu_label.setStyleSheet(f"""
             QPushButton {{
                 border-radius: 25px;
             }}
         """)
         
-        calmingcenterbtn = QPushButton("c")
+        profilepicture = QPushButton(QIcon(load_image("profile.png")), None, None)
         
-        calmingcenterbtn.setFixedHeight(50)
-        calmingcenterbtn.setFixedWidth(50)
+        profilepicture.setFixedHeight(80)
+        profilepicture.setFixedWidth(80)
+        profilepicture.setIconSize(QSize(80, 80)) 
 
-        calmingcenterbtn.setStyleSheet(f"""
+        profilepicture.setStyleSheet(f"""
             QPushButton {{
-                border-radius: 25px;
+                border-radius: 40px;
             }}
         """)
 
         topbarlayout = QHBoxLayout()
-        topbarlayout.addWidget(menu_button)
-        topbarlayout.addSpacing(75)
+        topbarlayout.addWidget(menu_label)
+        #topbarlayout.addSpacing(75)
         topbarlayout.addWidget(emergency_button)
-        topbarlayout.addStretch(75)
-        topbarlayout.addWidget(calmingcenterbtn)
+        #topbarlayout.addSpacing(75)
+        topbarlayout.addWidget(profilepicture)
 
         self.chat_display = QVBoxLayout()
         self.chat_display.setObjectName("ChatDisplay")
