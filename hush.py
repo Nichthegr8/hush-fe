@@ -184,9 +184,6 @@ class HushApp(QMainWindow):
     def switch_to_ai_page(self):
         self.stacked_widget.setCurrentWidget(self.ai_page)
 
-    def closeEvent(self, a0):
-        sys.exit(0)
-        return super().closeEvent(a0)
 
 # --- LOGIN SCREEN ---
 class LoginScreen(QWidget):
@@ -267,10 +264,6 @@ class LoginScreen(QWidget):
                     self.attempt_login()
             except (json.JSONDecodeError, KeyError):
                 pass
-
-    def closeEvent(self, a0):
-        sys.exit(0)
-        return super().closeEvent(a0)()
 
 # --- SIGN UP SCREEN (PROFILE SETUP) ---
 class SignUpScreen(QWidget):
