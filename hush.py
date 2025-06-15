@@ -466,6 +466,21 @@ class SignUpScreen(QWidget):
             profl_cs.onSignupSuccess = lambda: self.parent_window.switch_to_login()
         except IOError as e:
             self.error_label.setText(f"Error saving profile: {e}")
+
+class HoverQPushButton(QPushButton):
+    onhoverenter = pyqtSignal()
+    onhoverexit = pyqtSignal()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    def enterEvent(self, event):
+        self.onhoverenter.emit()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.onhoverexit.emit()
+        print("Mouse left button area")
+        super().leaveEvent(event)
+
 class AIPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
@@ -557,7 +572,7 @@ class AIPage(QWidget):
             }}
         """)
         
-        profilepicture = QPushButton(QIcon(load_image("profile.png")), None, None)
+        profilepicture = HoverQPushButton(QIcon(load_image("profile.png")), None, None)
         
         profilepicture.setFixedHeight(80)
         profilepicture.setFixedWidth(80)
@@ -566,8 +581,19 @@ class AIPage(QWidget):
         profilepicture.setStyleSheet(f"""
             QPushButton {{
                 border-radius: 40px;
+                background-color: none;
+                background: none;
+                border: 4px solid #292d32;
+            }}
+            QPushButton::hover {{
+                border-radius: 40px;
+                background-color: none;
+                background: none;
+                border: 4px solid #494d52;
             }}
         """)
+        profilepicture.onhoverenter.connect(lambda pfp = profilepicture: self.pfpenter(pfp))
+        profilepicture.onhoverexit.connect(lambda pfp = profilepicture: self.pfpexit(pfp))
 
         topbarlayout = QHBoxLayout()
         topbarlayout.addWidget(menu_label)
@@ -653,6 +679,12 @@ class AIPage(QWidget):
         self.audiorecorder = None
         self.ad_cs = connectors.audioDescClientSide(config.AUDESC_SERVICE_HOST)
         self.ad_cs.gotAudioDescription = self.onaudiodescribed
+
+    def pfpenter(self, button: QPushButton):
+        button.setIcon(QIcon(load_image("profile-hover.png")))
+
+    def pfpexit(self, button: QPushButton):
+        button.setIcon(QIcon(load_image("profile.png")))
 
     def onmicclicked(self):
         if self.audiorecorder:
