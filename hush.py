@@ -1,7 +1,10 @@
+
 import hashlib
 import sys
 import json
 import os
+import tempfile
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -9,6 +12,7 @@ from PIL.ImageQt import ImageQt, Image
 
 import packages.connectors as connectors
 import packages.config as config
+import packages.audiorecorder as audiorecorder
 
 # --- Constants ---
 USER_PROFILES_DIR = "user_profiles"
@@ -36,6 +40,9 @@ def load_image(image_path):
 
 # --- Rounded widget ---
 
+class signalHolder(QWidget):
+    signal = pyqtSignal(str)
+
 class RoundedWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -57,7 +64,7 @@ class HushApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("HUSH")
-        self.setGeometry(100, 100, 800, 750)
+        self.setGeometry(100, 100, 1170/2, 2532/2)
         self.setWindowIcon(QIcon())
         self.current_user_data = None
 
@@ -460,7 +467,6 @@ class SignUpScreen(QWidget):
             profl_cs.onSignupSuccess = lambda: self.parent_window.switch_to_login()
         except IOError as e:
             self.error_label.setText(f"Error saving profile: {e}")
-
 class AIPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
@@ -511,7 +517,7 @@ class AIPage(QWidget):
     def init_ui(self):
         layout = QVBoxLayout()
 
-        q1_label = QLabel("<b>1. How are you feeling right now?</b>")
+        q1_label = QLabel("<b>How are you feeling right now?</b>")
         layout.addWidget(q1_label)
 
         self.feelings_group = QHBoxLayout()
@@ -528,6 +534,7 @@ class AIPage(QWidget):
             btn = self.create_emoji_button(emoji, text)
             label = QLabel(text)
             label.setAlignment(Qt.AlignCenter)
+            btn.clicked.connect(lambda *args, t=text: self.onEmojiClicked(t))
             vbox.addWidget(btn, alignment=Qt.AlignCenter)
             vbox.addWidget(label)
             self.feelings_group.addLayout(vbox)
@@ -618,13 +625,57 @@ class AIPage(QWidget):
             }}""")
         
         self.btnwrapper.setLayout(button_layout)
+
+        self.mic.clicked.connect(self.onmicclicked)
+
+        # Container widget for layout
+        chat_container = QWidget()
+        chat_container.setLayout(self.chat_display)
+
+        # Scroll area to wrap the container
+        chat_scroll_area = QScrollArea()
+        chat_scroll_area.setWidgetResizable(True)
+        chat_scroll_area.setWidget(chat_container)
+        chat_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        chat_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         
         layout.addLayout(topbarlayout)
         layout.addWidget(q1_label)
         layout.addLayout(self.feelings_group)
-        layout.addLayout(self.chat_display)
+        layout.addWidget(chat_scroll_area)
         layout.addWidget(self.btnwrapper)
         self.setLayout(layout)
+        self.llmcs = connectors.llmClientSide(self.parent_window.current_user_data, config.LLM_SERVICE_HOST)
+        self.llmcs.onendstream = self.onendstreamprompt
+        self.oes = lambda:None
+        self.audiorecorder = None
+        self.ad_cs = connectors.audioDescClientSide(config.AUDESC_SERVICE_HOST)
+        self.ad_cs.gotAudioDescription = self.onaudiodescribed
+
+    def onmicclicked(self):
+        if self.audiorecorder:
+            self.endmic()
+        else:
+            self.startmic()
+
+    def startmic(self):
+        self.audiorecorder = audiorecorder.Recorder()
+        self.audiorecorder.start_recording()
+
+    def endmic(self):
+        frames = self.audiorecorder.stop_recording()
+        tmpfile = tempfile.mktemp(".wav", "tmp", tempfile.gettempdir())
+        self.audiorecorder.frames_to_file(frames, tmpfile)
+        self.audiorecorder.frames_to_file(frames, "test2.wav")
+        self.ad_cs.describe(tmpfile)
+        self.audiorecorder = None
+
+    def onaudiodescribed(self, description):
+        self.showSendPrompt(description)
+        ai_response = QLabel("")
+        self.chat_display.addWidget(ai_response)
+        self.llmcs.addToStream = lambda text: self.onStreamPartRecieved(text, ai_response)
+        self.llmcs.generate_response(f"{{'input-type': 'text', 'description': '{description}'}}")
 
     def start_conversation(self):
         self.addwidgettostretchlay(QLabel("I'm here to help. Tell me what's happening."), self.chat_display)
@@ -670,13 +721,53 @@ class AIPage(QWidget):
 
         self.addlayouttostretchlay(usermessagelayout, self.chat_display)
         self.user_input.clear()
-        self.llm_cs = connectors.llmClientSide(self.parent_window.current_user_data, config.LLM_SERVICE_HOST)
         self.send.setDisabled(True)
-        self.llm_cs.onendstream = lambda: self.send.setDisabled(False)
+        self.llmcs.onendstream = self.onendstreamprompt
         ai_response = QLabel("")
-        self.llm_cs.addToStream = lambda text: self.onStreamPartRecieved(text, ai_response)
-        self.llm_cs.generate_response(user_text)
+        ai_response.setWordWrap(True)
+        sigh = signalHolder()
+        sigh.signal.connect(lambda text: self.onStreamPartRecieved(text, ai_response))
+        self.llmcs.addToStream = lambda text: sigh.signal.emit(text)
+        self.llmcs.generate_response(f"{{'input-type': 'text', 'content': '{user_text}'}}")
         self.addwidgettostretchlay(ai_response, self.chat_display)
+
+    def onendstreamprompt(self):
+        self.send.setDisabled(False)
+        self.llmcs.addToStream = self.oes
+
+    def showSendPrompt(self, prompt):
+        usermessagewidget = QWidget()
+        layout = QHBoxLayout(usermessagewidget)
+        layout.addStretch(1)
+        usermessagewidget.setStyleSheet(f"""background-color: #d2f0ff;
+                            color: #000;
+                            padding: 10px;
+                            border-radius: 12px;
+                            font-size: {FONT_SIZE};
+                            margin: 6px 0;""")
+        layout.addWidget(QLabel(prompt))
+        usermessagewidget.setLayout(layout)
+
+        usermessagelayout = QHBoxLayout()
+        usermessagelayout.addStretch(1)
+        usermessagelayout.addWidget(usermessagewidget)
+
+        self.addlayouttostretchlay(usermessagelayout, self.chat_display)
+
+    def onEmojiClicked(self, emoji: str):
+        self.showSendPrompt(f"I am {emoji}")
+
+        self.send.setDisabled(True)
+
+        ai_response = QLabel("")
+        ai_response.setWordWrap(True)
+        sigh = signalHolder()
+        sigh.signal.connect(lambda text: self.onStreamPartRecieved(text, ai_response))
+        self.llmcs.addToStream = lambda text: sigh.signal.emit(text)
+        self.llmcs.generate_response(f"{{'input-type': 'text', 'content': 'I am {emoji}'}}")
+
+        self.addwidgettostretchlay(ai_response, self.chat_display)
+
         
     def onStreamPartRecieved(self, text: str, qlabel: QLabel):
         qlabel.setText(qlabel.text()+text)

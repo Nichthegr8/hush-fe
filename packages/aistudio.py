@@ -93,9 +93,10 @@ class AIStudio:
     def __init__(self, apikey: str = None):
         if not apikey:
             apikey=os.environ["apikey"]
+        print("Loading client")
         self.client = genai.Client(api_key=apikey)
+        print("Loaded")
         self.gemini25flash = "gemini-2.5-flash-preview-05-20"
-        self.ttsmodel = "gemini-2.5-flash-preview-tts"
     def query_llm(self, prompt, model = "gemini-2.5-flash-preview-05-20"):
         self.client.models.generate_content_stream(
             model = model,
@@ -110,12 +111,6 @@ class AIStudio:
         )
     def get_chat(self, model):
         return Chat(self.client, model)
-
-    def tts(self, text):
-        self.client.models.generate_content(
-            model = self.ttsmodel,
-            contents=text
-        )
 
 def set_apikey(api_key: str):
     os.environ["apikey"] = api_key

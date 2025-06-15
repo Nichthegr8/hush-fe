@@ -4,4 +4,60 @@ nigga('127.0.0.1', 54274): Query from b'philippo':
 
 nigga('127.0.0.1', 57245): Query from b'philippo':
 
-hi
+hi('127.0.0.1', 62331): Query from philippo:
+
+{'input-type': 'text', 'content': 'Hello'}('127.0.0.1', 62331): Query from philippo:
+
+{'input-type': 'text', 'content': 'Hello'}('127.0.0.1', 62331): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 62476): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 62476): Query from philippo:
+
+{'input-type': 'text', 'content': 'chest'}('127.0.0.1', 62476): Query from philippo:
+
+{'input-type': 'text', 'content': 'there are a lot of people i don't know'}('127.0.0.1', 65471): Query from philippo:
+
+{'input-type': 'text', 'content': 'Hello'}('127.0.0.1', 65471): Query from philippo:
+
+{'input-type': 'text', 'content': 'i cant find my mom'}('127.0.0.1', 32412): Query from philippo:
+
+{'input-type': 'text', 'content': 'hello'}('127.0.0.1', 32412): Query from philippo:
+
+{'input-type': 'text', 'content': 'yes i am'}('127.0.0.1', 32632): Query from philippo:
+
+{'input-type': 'text', 'content': 'Hello'}('127.0.0.1', 32632): Query from philippo:
+
+{'input-type': 'text', 'content': 'No'}('127.0.0.1', 32658): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 32679): Query from philippo:
+
+{'input-type': 'text', 'content': 'Hello'}('127.0.0.1', 32679): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 44065): Query from philippo:
+
+{'input-type': 'text', 'content': 'Hello'}('127.0.0.1', 44065): Query from philippo:
+
+{'input-type': 'text', 'content': 'fine'}('127.0.0.1', 44065): Query from philippo:
+
+{'input-type': 'text', 'content': 'i dont know'}('127.0.0.1', 24351): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 24351): Query from philippo:
+
+{'input-type': 'text', 'content': 'My chest'}('127.0.0.1', 24351): Query from philippo:
+
+{'input-type': 'text', 'content': 'she wont pick up'}('127.0.0.1', 22051): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 24480): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 24480): Query from philippo:
+
+{'input-type': 'text', 'content': 'My chest'}('127.0.0.1', 24480): Query from philippo:
+
+{'input-type': 'text', 'content': 'She won't pick up'}('127.0.0.1', 12019): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am 3'}('127.0.0.1', 12050): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 6758): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Scared'}

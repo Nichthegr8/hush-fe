@@ -1,7 +1,9 @@
 import packages.aistudio as aistudio
 import packages.listeners as listeners
+import packages.audioparser as audioparser
 from packages.listeners import getPrivateIp
 
+import tempfile
 import json
 import os
 import socket
@@ -13,6 +15,7 @@ env = dotenv.dotenv_values()
 
 LLM_PORT = 8801
 PROFL_PORT = 8802
+AUDESC_PORT = 8803
 LLM_DATA_SPLITTER = bytearray([1,1,1,1])
 
 class llmServerSide:
@@ -45,21 +48,20 @@ class llmServerSide:
         with open(os.path.join(os.getcwd(), "user_profiles", f"{name}.json"))as f:
             return f.read()
         
-    def prepare_chat(self, profile: str) -> aistudio.Chat:
-        profile = json.loads(profile)
+    def prepare_chat(self, profile: dict) -> aistudio.Chat:
         if profile['credentials']['username'] in self.chats:
             chat = self.chats[profile['credentials']['username']]
         else:
             chat = self.studio.get_chat(self.studio.gemini25flash)
             self.chats[profile['credentials']['username']] = chat
-        sysinstructions = "You are an AI to help children with different forms of autism in moments of stress or panic to calm down. Only include one question and a couple of sentences per response. Get to the point of solving the problem the user adresses and don't digress or get sidetracked, even if the profile's calming techniques includes stuff like distractions. Child profile: " + json.dumps(profile)
+        sysinstructions = "You are an AI to help children with different forms of autism in moments of stress or panic to calm down. Only include one question and a couple of sentences per response. You are not able to do any function calls like calling phones. You are able to put hyperlinks to phone numbers in the response by inserting \'<a href=\"tel:[number]\">[text]</a>\'. Get to the point of solving the problem, and not just providing calming strategies. Child profile: " + json.dumps(profile)
         chat.set_system_instructions(sysinstructions)
         return chat
 
     def onmessage(self, conn: socket.socket, data: bytes):
         parts = data.split(LLM_DATA_SPLITTER)
-        profile = parts[0]
-        chat = self.prepare_chat(profile.decode())
+        profile = json.loads(parts[0])
+        chat = self.prepare_chat(profile)
 
         query = parts[1].decode('utf-8')
         conn.send(self.startStreamPckt)
@@ -73,8 +75,8 @@ class llmServerSide:
         self.log(f"{addr}: Connection closed")
 
     def onerror(self, conn: socket.socket, e: Exception):
-        #self.log(f"{conn.getpeername()}: Exception in connection: {e}")
-        raise
+        self.log(f"{conn.getpeername()}: Exception in connection: {e}")
+        #raise
 
 class llmClientSide:
     def __init__(self, profile, host):
@@ -210,12 +212,10 @@ class profilesServerSide:
         self.log(f"{addr}: Connection closed")
 
     def onerror(self, conn: socket.socket, e: Exception):
-        #self.log(f"{conn.getpeername()}: Exception in connection: {e}")
-        raise
+        self.log(f"{conn.getpeername()}: Exception in connection: {e}")
 
 class profilesClientSide:
     def __init__(self, host):
-
         self.sclient = listeners.connectToListener(host, PROFL_PORT)
         self.logInPcktType = 2
         self.signUpPcktType = 3
@@ -245,3 +245,69 @@ class profilesClientSide:
 
     def sign_up(self, profile):
         self.sclient.send(bytearray([self.signUpPcktType])+json.dumps(profile).encode())
+
+
+class audioDescServerSide:
+    def __init__(self, llmss):
+        self.llmss = llmss
+        self.sserver = listeners.createListener(AUDESC_PORT)
+
+        self.describeRequest = 2
+        self.describeResponse = 3
+
+        self.recieving = False
+
+        self.sserver.onopen = self.onopen
+        self.sserver.onmessage = self.onmessage
+        self.sserver.onclose = self.onclose
+        self.sserver.onerror = self.onerror
+
+    def start(self):
+        self.sserver.start()
+
+    def log(self, text: str):
+        print("[+] AUDESC Service: "+text)
+
+    def onopen(self, conn: socket.socket):
+        self.log(f"Connection from {conn.getpeername()}")
+
+    def onmessage(self, conn: socket.socket, data: bytes):
+        self.log(f"{conn.getpeername()}: Got data")
+        isRequest = data[0] == self.describeRequest
+        if isRequest or self.recieving:
+            tmpfile = tempfile.mktemp(".wav", "tmp", tempfile.gettempdir())
+            with open(tmpfile, "wb") as f:
+                f.write(data[1:])
+                print(data)
+            conn.send(bytearray([self.describeResponse])+audioparser.describe(self.llmss.studio, tmpfile))
+            print("Sent description")
+
+    def onclose(self, addr):
+        self.log(f"{addr}: Connection closed")
+
+    def onerror(self, conn: socket.socket, e: Exception):
+        self.log(f"{conn.getpeername()}: Exception in connection: {e}")
+
+class audioDescClientSide:
+    def __init__(self, host):
+
+        self.sclient = listeners.connectToListener(host, AUDESC_PORT)
+        self.describeRequest = 2
+        self.describeResponse = 3
+
+        self.sclient.onmessage = self.onmessage
+
+        if not self.sclient.running:
+            raise Exception("Server is offline")
+        
+    def gotAudioDescription(self, description: str):
+        pass
+
+    def onmessage(self, conn: socket.socket, data: bytes):
+        isResponse = data[0] == self.describeResponse
+        if isResponse:
+            self.gotAudioDescription(data[1:].decode())
+    
+    def describe(self, audiofile):
+        with open(audiofile, "rb")as f:
+            self.sclient.send(bytearray([self.describeRequest])+f.read())
