@@ -471,7 +471,6 @@ class HoverQPushButton(QPushButton):
 
     def leaveEvent(self, event):
         self.onhoverexit.emit()
-        print("Mouse left button area")
         super().leaveEvent(event)
 
 class AIPage(QWidget):
@@ -576,13 +575,11 @@ class AIPage(QWidget):
                 border-radius: 40px;
                 background-color: none;
                 background: none;
-                border: 4px solid #292d32;
             }}
             QPushButton::hover {{
                 border-radius: 40px;
                 background-color: none;
                 background: none;
-                border: 4px solid #494d52;
             }}
         """)
         profilepicture.onhoverenter.connect(lambda pfp = profilepicture: self.pfpenter(pfp))
