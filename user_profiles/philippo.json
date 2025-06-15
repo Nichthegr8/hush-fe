@@ -16,9 +16,7 @@
         ]
     },
     "calming": {
-        "image_themes": [
-            "Dark, simple images"
-        ],
+        "image_themes": [],
         "sound_themes": [
             "Nature sounds (rain, birds)"
         ],

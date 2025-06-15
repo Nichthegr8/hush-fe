@@ -60,4 +60,68 @@ hi('127.0.0.1', 62331): Query from philippo:
 
 {'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 6758): Query from philippo:
 
-{'input-type': 'text', 'content': 'I am Scared'}
+{'input-type': 'text', 'content': 'I am Scared'}('127.0.0.1', 33890): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 33890): Query from philippo:
+
+{'input-type': 'text', 'content': 'no, not right now'}('127.0.0.1', 33890): Query from philippo:
+
+{'input-type': 'text', 'content': 'no, not right now'}('127.0.0.1', 33923): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 33937): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 33997): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 34042): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 34060): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 34060): Query from philippo:
+
+{'input-type': 'text', 'content': 'no, not right now'}('127.0.0.1', 34060): Query from philippo:
+
+{'input-type': 'text', 'content': 'no'}('127.0.0.1', 34103): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 34103): Query from philippo:
+
+{'input-type': 'text', 'content': 'no, not right now'}('127.0.0.1', 34103): Query from philippo:
+
+{'input-type': 'text', 'content': 'no, not now'}('127.0.0.1', 34103): Query from philippo:
+
+{'input-type': 'text', 'content': 'my brother keeps annoying me'}('127.0.0.1', 34103): Query from philippo:
+
+{'input-type': 'text', 'content': 'he wont stop yelling'}('127.0.0.1', 35035): Query from philippo:
+
+{'input-type': 'text', 'content': 'hello'}('127.0.0.1', 35035): Query from philippo:
+
+{'input-type': 'text', 'content': 'hello'}('127.0.0.1', 35035): Query from philippo:
+
+{'input-type': 'text', 'content': 'hello'}('127.0.0.1', 35035): Query from philippo:
+
+{'input-type': 'text', 'content': 'hello'}('127.0.0.1', 35035): Query from philippo:
+
+{'input-type': 'text', 'content': 'hello'}('127.0.0.1', 35035): Query from philippo:
+
+{'input-type': 'text', 'content': 'hello'}('127.0.0.1', 35035): Query from philippo:
+
+{'input-type': 'text', 'content': 'hello'}('127.0.0.1', 35035): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Anxious'}{"credentials": {"username": "philippo", "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"}, "general": {"first_name": "Philippo", "last_name": "", "gender": "Male", "dob": "2012-08-29"}, "diagnosis": {"autism_type": "Asperger's", "communication_styles": ["Verbal"]}, "('127.0.0.1', 35054): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Sad'}('127.0.0.1', 35054): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 35054): Query from philippo:
+
+{'input-type': 'text', 'content': 'no, not right now'}('127.0.0.1', 35054): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 35070): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 35070): Query from philippo:
+
+{'input-type': 'text', 'content': 'no, not right now'}('127.0.0.1', 35091): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 35091): Query from philippo:
+
+{'input-type': 'text', 'content': 'not right now'}('127.0.0.1', 35091): Query from philippo:
+
+{'input-type': 'text', 'content': 'no'}

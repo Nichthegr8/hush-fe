@@ -64,7 +64,7 @@ class HushApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("HUSH")
-        self.setGeometry(100, 100, 1170/2, 2532/2)
+        self.setGeometry(100, 100, 567, 1162)
         self.setWindowIcon(QIcon())
         self.current_user_data = None
 
@@ -517,7 +517,7 @@ class AIPage(QWidget):
     def init_ui(self):
         layout = QVBoxLayout()
 
-        q1_label = QLabel("<b>How are you feeling right now?</b>")
+        q1_label = QLabel(f"<h2>How are you feeling right now?</h2>")
         layout.addWidget(q1_label)
 
         self.feelings_group = QHBoxLayout()
@@ -541,12 +541,8 @@ class AIPage(QWidget):
 
         self.setLayout(layout)
         
-        # Add red Emergency button under the feelings group
-        
-        
-        emergency_button = QPushButton("I need help") 
-        emergency_button.setStyleSheet("QPushButton { background-color: red; color: white; font-weight: bold; font-size: 18px; }")
-        emergency_button.setGeometry(0, 0, 2, 2)
+        emergency_button = QPushButton("I need help")
+        emergency_button.setFixedWidth(257)
         
         menu_button = QPushButton("m")
         
@@ -572,7 +568,9 @@ class AIPage(QWidget):
 
         topbarlayout = QHBoxLayout()
         topbarlayout.addWidget(menu_button)
+        topbarlayout.addSpacing(75)
         topbarlayout.addWidget(emergency_button)
+        topbarlayout.addStretch(75)
         topbarlayout.addWidget(calmingcenterbtn)
 
         self.chat_display = QVBoxLayout()
@@ -625,7 +623,6 @@ class AIPage(QWidget):
             }}""")
         
         self.btnwrapper.setLayout(button_layout)
-
         self.mic.clicked.connect(self.onmicclicked)
 
         # Container widget for layout
@@ -640,8 +637,10 @@ class AIPage(QWidget):
         chat_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         
         layout.addLayout(topbarlayout)
+        layout.addSpacing(40)
         layout.addWidget(q1_label)
         layout.addLayout(self.feelings_group)
+        layout.addSpacing(40)
         layout.addWidget(chat_scroll_area)
         layout.addWidget(self.btnwrapper)
         self.setLayout(layout)
@@ -768,7 +767,6 @@ class AIPage(QWidget):
 
         self.addwidgettostretchlay(ai_response, self.chat_display)
 
-        
     def onStreamPartRecieved(self, text: str, qlabel: QLabel):
         qlabel.setText(qlabel.text()+text)
 

@@ -16,7 +16,7 @@ env = dotenv.dotenv_values()
 LLM_PORT = 8801
 PROFL_PORT = 8802
 AUDESC_PORT = 8803
-LLM_DATA_SPLITTER = bytearray([1,1,1,1])
+DATA_SPLITTER = bytearray([1,1,1,1])
 
 class llmServerSide:
     def __init__(self):
@@ -54,12 +54,12 @@ class llmServerSide:
         else:
             chat = self.studio.get_chat(self.studio.gemini25flash)
             self.chats[profile['credentials']['username']] = chat
-        sysinstructions = "You are an AI to help children with different forms of autism in moments of stress or panic to calm down. Only include one question and a couple of sentences per response. You are not able to do any function calls like calling phones. You are able to put hyperlinks to phone numbers in the response by inserting \'<a href=\"tel:[number]\">[text]</a>\'. Get to the point of solving the problem, and not just providing calming strategies. Child profile: " + json.dumps(profile)
+        sysinstructions = "You are an AI to help children with different forms of autism in moments of stress or panic to calm down. Only include one question and a couple of sentences per response. You are not able to do any function calls like calling phones. You are able to put hyperlinks to phone numbers in the response by inserting \'<a href=\"tel:[number]\">[text]</a>\'. Get to the point of solving the problem, and not just providing calming strategies. However, if the user does need to be calmed down, for example in the case of them being angry, provide a calming strategy first, but in the case of something more serious, for example being hurt, dont provide calming strategies. If they do need to be calmed before fixing the problem, you are only allowed to offer 2 calming strategies before going to ix the problem. Child profile: " + json.dumps(profile)
         chat.set_system_instructions(sysinstructions)
         return chat
 
     def onmessage(self, conn: socket.socket, data: bytes):
-        parts = data.split(LLM_DATA_SPLITTER)
+        parts = data.split(DATA_SPLITTER)
         profile = json.loads(parts[0])
         chat = self.prepare_chat(profile)
 
@@ -112,7 +112,7 @@ class llmClientSide:
                 self.addToStream(message.decode())
 
     def generate_response(self, query: str):
-        payload = json.dumps(self.profile).encode() + LLM_DATA_SPLITTER + query.encode()
+        payload = json.dumps(self.profile).encode() + DATA_SPLITTER + query.encode()
         self.sclient.send(payload)
 
 class profilesServerSide:
@@ -274,13 +274,25 @@ class audioDescServerSide:
     def onmessage(self, conn: socket.socket, data: bytes):
         self.log(f"{conn.getpeername()}: Got data")
         isRequest = data[0] == self.describeRequest
-        if isRequest or self.recieving:
-            tmpfile = tempfile.mktemp(".wav", "tmp", tempfile.gettempdir())
-            with open(tmpfile, "wb") as f:
-                f.write(data[1:])
-                print(data)
-            conn.send(bytearray([self.describeResponse])+audioparser.describe(self.llmss.studio, tmpfile))
-            print("Sent description")
+        if isRequest:
+            self.tmpfile = tempfile.mktemp(".wav", "tmp", tempfile.gettempdir())
+            s = data.split(DATA_SPLITTER)
+            self.length = s[0]
+            self.recieving = True
+            self.recieved = 0
+            with open(self.tmpfile, "wb") as f:
+                f.write(s[1])
+                self.length += len(s[1])
+        else:
+            if self.recieved >= self.length:
+                self.recieving = False
+                self.recieved = 0
+                conn.send(bytearray([self.describeResponse])+audioparser.describe(self.llmss.studio, self.tmpfile))
+                print("Sent description")
+            if self.recieving:
+                with open(self.tmpfile, "ab") as f:
+                    f.write(data)
+                    self.length += 1024
 
     def onclose(self, addr):
         self.log(f"{addr}: Connection closed")
@@ -310,4 +322,4 @@ class audioDescClientSide:
     
     def describe(self, audiofile):
         with open(audiofile, "rb")as f:
-            self.sclient.send(bytearray([self.describeRequest])+f.read())
+            self.sclient.send(bytearray([self.describeRequest])+bytearray([len(f.read())])+DATA_SPLITTER+f.read())
