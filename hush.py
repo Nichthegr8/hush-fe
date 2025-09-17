@@ -697,6 +697,8 @@ class AIPage(QWidget):
     def onaudiodescribed(self, description):
         self.showSendPrompt(description)
         ai_response = QLabel("")
+        ai_response.setWordWrap(True)
+        ai_response.setTextFormat(Qt.RichText)
         self.chat_display.addWidget(ai_response)
         self.llmcs.addToStream = lambda text: self.onStreamPartRecieved(text, ai_response)
         self.llmcs.generate_response(f"{{'input-type': 'text', 'description': '{description}'}}")
@@ -749,6 +751,8 @@ class AIPage(QWidget):
         self.llmcs.onendstream = self.onendstreamprompt
         ai_response = QLabel("")
         ai_response.setWordWrap(True)
+        ai_response.setTextFormat(Qt.RichText)
+
         sigh = signalHolder()
         sigh.signal.connect(lambda text: self.onStreamPartRecieved(text, ai_response))
         self.llmcs.addToStream = lambda text: sigh.signal.emit(text)
@@ -785,6 +789,7 @@ class AIPage(QWidget):
 
         ai_response = QLabel("")
         ai_response.setWordWrap(True)
+        ai_response.setTextFormat(Qt.RichText)
         sigh = signalHolder()
         sigh.signal.connect(lambda text: self.onStreamPartRecieved(text, ai_response))
         self.llmcs.addToStream = lambda text: sigh.signal.emit(text)

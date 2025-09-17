@@ -142,4 +142,54 @@ hi('127.0.0.1', 62331): Query from philippo:
 
 {'input-type': 'text', 'content': 'i cant find my mom'}('127.0.0.1', 35448): Query from philippo:
 
-{'input-type': 'text', 'content': 'I don't know'}
+{'input-type': 'text', 'content': 'I don't know'}('127.0.0.1', 38857): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 38999): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 38999): Query from philippo:
+
+{'input-type': 'text', 'content': 'Not right now'}('127.0.0.1', 38999): Query from philippo:
+
+{'input-type': 'text', 'content': 'No'}('127.0.0.1', 38999): Query from philippo:
+
+{'input-type': 'text', 'content': 'My brother won't stop yelling about football'}('127.0.0.1', 38999): Query from philippo:
+
+{'input-type': 'text', 'content': 'There is my room, but i can still hear him'}('127.0.0.1', 39032): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 39049): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 39049): Query from philippo:
+
+{'input-type': 'text', 'content': 'Not right now'}('127.0.0.1', 39049): Query from philippo:
+
+{'input-type': 'text', 'content': 'No'}('127.0.0.1', 39049): Query from philippo:
+
+{'input-type': 'text', 'content': 'My brother won't stop yelling'}('127.0.0.1', 39049): Query from philippo:
+
+{'input-type': 'text', 'content': 'there is my room'}('127.0.0.1', 39515): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 39515): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 39515): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 39515): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 39652): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 39665): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 39705): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Hurt'}('127.0.0.1', 39705): Query from philippo:
+
+{'input-type': 'text', 'content': 'my chest'}('127.0.0.1', 39705): Query from philippo:
+
+{'input-type': 'text', 'content': 'yes it does'}('127.0.0.1', 39755): Query from philippo:
+
+{'input-type': 'text', 'content': 'I am Angry'}('127.0.0.1', 39755): Query from philippo:
+
+{'input-type': 'text', 'content': 'no, not right now'}('127.0.0.1', 39755): Query from philippo:
+
+{'input-type': 'text', 'content': 'no'}('127.0.0.1', 39755): Query from philippo:
+
+{'input-type': 'text', 'content': 'My brother won't stop shouting about football'}
